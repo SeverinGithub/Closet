@@ -1,0 +1,177 @@
+/* ─────────────────────────────────────────────────────────────
+   Closet — editorial fashion design tokens
+   ───────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* light (default) — warm cream editorial */
+  --bg:        #F4F1EA;
+  --surface:   #FFFFFF;
+  --surface-2: #ECE7DC;
+  --ink:       #0E0E0E;
+  --ink-2:     #2B2A26;
+  --ink-soft:  #6E6A60;
+  --ink-mute:  #A39E92;
+  --line:      #DDD7C9;
+  --line-soft: #ECE7DC;
+  --accent:    #B6291E;     /* lipstick / oxblood */
+  --accent-2:  #1F3A8A;     /* deep editorial blue */
+
+  --serif: 'Instrument Serif', 'Times New Roman', serif;
+  --sans:  'Geist', -apple-system, system-ui, sans-serif;
+  --mono:  'JetBrains Mono', ui-monospace, monospace;
+}
+
+.dark {
+  --bg:        #0E0D0B;
+  --surface:   #1A1916;
+  --surface-2: #232119;
+  --ink:       #F2EDE2;
+  --ink-2:     #D8D3C6;
+  --ink-soft:  #8A857A;
+  --ink-mute:  #5B574E;
+  --line:      #2C2A24;
+  --line-soft: #1F1D18;
+  --accent:    #E04A3F;
+  --accent-2:  #4E6FE0;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  background: #1f1d18;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse at 50% 0%, #2a2722 0%, #15130f 60%, #0a0907 100%);
+}
+
+/* ── editorial typography utilities ── */
+.h-display {
+  font-family: var(--serif);
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: -0.015em;
+}
+.h-display em, .it {
+  font-style: italic;
+  font-family: var(--serif);
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.label-cap {
+  font-family: var(--sans);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ── scrollbar hide for horizontal rails ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* ── tile patterns (placeholder garment textures) ── */
+.pat-stripe   { background-image: repeating-linear-gradient(90deg, rgba(0,0,0,0.18) 0 1px, transparent 1px 6px); }
+.pat-stripe-w { background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.22) 0 1px, transparent 1px 7px); }
+.pat-check    { background-image:
+                  repeating-linear-gradient(0deg, rgba(0,0,0,0.14) 0 1px, transparent 1px 14px),
+                  repeating-linear-gradient(90deg, rgba(0,0,0,0.14) 0 1px, transparent 1px 14px); }
+.pat-denim    { background-image:
+                  repeating-linear-gradient(45deg, rgba(255,255,255,0.07) 0 1px, transparent 1px 3px),
+                  repeating-linear-gradient(-45deg, rgba(0,0,0,0.06) 0 1px, transparent 1px 3px); }
+.pat-knit     { background-image:
+                  radial-gradient(circle at 3px 3px, rgba(0,0,0,0.13) 1.4px, transparent 1.6px); background-size: 8px 8px; }
+.pat-leather  { background-image:
+                  radial-gradient(ellipse 6px 4px at 50% 50%, rgba(255,255,255,0.06), transparent 70%); background-size: 14px 11px; }
+.pat-dot      { background-image: radial-gradient(circle, rgba(0,0,0,0.18) 1px, transparent 1.4px); background-size: 10px 10px; }
+.pat-grain {
+  background-image:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.06), transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(0,0,0,0.07), transparent 50%);
+}
+
+/* ── pinterest-style masonry via CSS columns ── */
+.masonry-2 { column-count: 2; column-gap: 10px; }
+.masonry-2 > * { break-inside: avoid; margin-bottom: 10px; display: block; }
+
+/* ── selection ── */
+::selection { background: var(--accent); color: #fff; }
+
+/* ── form reset ── */
+input, button, textarea, select {
+  font-family: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  outline: none;
+}
+
+/* ── chip ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 0.5px solid var(--line);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--sans);
+}
+.chip.is-on {
+  background: var(--ink);
+  color: var(--bg);
+  border-color: var(--ink);
+}
+
+/* ── divider ── */
+.rule {
+  height: 0.5px;
+  background: var(--line);
+  border: none;
+  margin: 0;
+}
+.rule-dotted {
+  border: none;
+  border-top: 0.5px dashed var(--line);
+  margin: 0;
+}
+
+/* ── soft press ── */
+button { cursor: pointer; }
+.press { transition: transform 0.12s, opacity 0.12s; }
+.press:active { transform: scale(0.97); opacity: 0.85; }
+
+/* ── fade in on screen change ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeUp 0.32s ease-out; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

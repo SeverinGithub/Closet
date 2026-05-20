@@ -1,0 +1,226 @@
+// ─────────────────────────────────────────────────────────────
+// FITS screen — outfit gallery + swipe / generator
+// ─────────────────────────────────────────────────────────────
+const FitsScreen = ({ mode, onNav }) => {
+  const [view, setView] = React.useState('grid'); // 'grid' | 'swipe'
+  const [filter, setFilter] = React.useState('ALL');
+  const [occasion, setOccasion] = React.useState(null);
+
+  const moods = ['ALL', 'WORK', 'CASUAL', 'EVENING'];
+  const occasions = ['Office', 'Date', 'Weekend', 'Travel', 'Party', 'Gym'];
+
+  const filtered = OUTFITS.filter(o => filter === 'ALL' || o.mood === filter);
+
+  return (
+    <div className="fade-in" style={{ paddingBottom: 110 }}>
+
+      {/* header */}
+      <div style={{ padding: '8px 20px 14px' }}>
+        <div className="eyebrow">Volume II · Outfits</div>
+        <div className="h-display" style={{ fontSize: 44, marginTop: 6, color: 'var(--ink)' }}>
+          Your <em style={{ color: 'var(--accent)' }}>fits</em>
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 6, fontFamily: 'var(--serif)', fontStyle: 'italic' }}>
+          {OUTFITS.length} composed · {ITEMS.length} pieces in rotation
+        </div>
+      </div>
+
+      {/* view toggle */}
+      <div style={{ display: 'flex', gap: 0, padding: '0 20px 14px' }}>
+        <button onClick={() => setView('grid')} className="press" style={{
+          flex: 1, padding: '10px', borderRadius: '100px 0 0 100px',
+          background: view === 'grid' ? 'var(--ink)' : 'transparent',
+          color: view === 'grid' ? 'var(--bg)' : 'var(--ink-soft)',
+          border: '0.5px solid var(--line)',
+          borderRight: view === 'grid' ? 'none' : '0.5px solid var(--line)',
+          fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}>
+          <Icon name="fits" size={12} sw={1.4}/> Gallery
+        </button>
+        <button onClick={() => setView('swipe')} className="press" style={{
+          flex: 1, padding: '10px', borderRadius: '0 100px 100px 0',
+          background: view === 'swipe' ? 'var(--ink)' : 'transparent',
+          color: view === 'swipe' ? 'var(--bg)' : 'var(--ink-soft)',
+          border: '0.5px solid var(--line)',
+          fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}>
+          <Icon name="sparkle" size={12} sw={1.4}/> Generate
+        </button>
+      </div>
+
+      {view === 'grid' ? (
+        <>
+          {/* filter chips */}
+          <div className="no-scrollbar" style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 20px 16px' }}>
+            {moods.map(m => (
+              <Chip key={m} active={filter === m} onClick={() => setFilter(m)} mono>{m}</Chip>
+            ))}
+            <div style={{ width: 1, background: 'var(--line)', margin: '4px 4px' }}/>
+            {occasions.map(o => (
+              <Chip key={o} active={occasion === o} onClick={() => setOccasion(occasion === o ? null : o)}>{o}</Chip>
+            ))}
+          </div>
+
+          {/* masonry grid */}
+          <div style={{ padding: '0 20px' }}>
+            <div className="masonry-2">
+              {filtered.map((o, i) => (
+                <OutfitCard key={o.id} outfit={o} mode={mode}
+                  large={i % 5 === 0}
+                  onClick={() => onNav('outfit', o.id)}/>
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <SwipeGenerator mode={mode} onNav={onNav}/>
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// Swipe generator — Tinder-style outfit cycling
+// ─────────────────────────────────────────────────────────────
+const SwipeGenerator = ({ mode, onNav }) => {
+  const [vibe, setVibe] = React.useState('WORK');
+  const [idx, setIdx] = React.useState(0);
+  const [dir, setDir] = React.useState(0); // -1 left, +1 right, 0 idle
+  const [saved, setSaved] = React.useState(0);
+
+  const pool = OUTFITS.filter(o => o.mood === vibe);
+  const cur = pool[idx % pool.length];
+
+  const swipe = (d) => {
+    setDir(d);
+    if (d === 1) setSaved(s => s + 1);
+    setTimeout(() => {
+      setIdx(i => i + 1);
+      setDir(0);
+    }, 280);
+  };
+
+  if (!cur) return null;
+  const items = cur.items.map(id => ITEMS_BY_ID[id]);
+
+  return (
+    <div>
+      {/* vibe selector */}
+      <div style={{ padding: '0 20px 20px' }}>
+        <div className="eyebrow" style={{ marginBottom: 8 }}>Tonight's mood</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {['WORK','CASUAL','EVENING'].map(v => (
+            <Chip key={v} active={vibe === v} onClick={() => { setVibe(v); setIdx(0); }} mono>
+              {v}
+            </Chip>
+          ))}
+        </div>
+      </div>
+
+      {/* card stack */}
+      <div style={{ padding: '0 20px', position: 'relative', height: 480 }}>
+        {/* card behind */}
+        <div style={{
+          position: 'absolute', inset: '0 36px 24px 36px', borderRadius: 8,
+          background: 'var(--surface)', border: '0.5px solid var(--line)',
+          opacity: 0.5, transform: 'translateY(8px) scale(0.96)',
+        }}/>
+        {/* card behind 2 */}
+        <div style={{
+          position: 'absolute', inset: '0 24px 12px 24px', borderRadius: 8,
+          background: 'var(--surface)', border: '0.5px solid var(--line)',
+          opacity: 0.7, transform: 'translateY(4px) scale(0.98)',
+        }}/>
+        {/* current card */}
+        <div key={idx} style={{
+          position: 'absolute', inset: '0 14px 0 14px', borderRadius: 8,
+          background: 'var(--surface)', border: '0.5px solid var(--line)',
+          overflow: 'hidden',
+          transform: dir !== 0
+            ? `translateX(${dir * 380}px) rotate(${dir * 14}deg)`
+            : 'translateX(0) rotate(0)',
+          transition: dir !== 0 ? 'transform 0.28s cubic-bezier(.5,0,.3,1), opacity 0.28s' : 'none',
+          opacity: dir !== 0 ? 0 : 1,
+          animation: dir === 0 ? 'fadeIn 0.25s' : 'none',
+        }}>
+          {/* outfit stack */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1,
+            background: 'var(--line)', aspectRatio: '1 / 1.15',
+          }}>
+            {items.slice(0,4).map(it => (
+              <div key={it.id} className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
+                style={{ background: it.tone, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', inset: 0,
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 40%, rgba(0,0,0,0.1))',
+                }}/>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ padding: '14px 16px' }}>
+            <div className="eyebrow">{cur.mood} · {cur.occasion?.join(' · ')}</div>
+            <div style={{ fontFamily: 'var(--serif)', fontSize: 26, lineHeight: 1, marginTop: 6 }}>
+              <em>{cur.name}</em>
+            </div>
+            <div style={{ marginTop: 10, fontSize: 11, color: 'var(--ink-soft)' }}>
+              {items.map(it => it.name).join(' · ')}
+            </div>
+          </div>
+
+          {/* like / nope stamps */}
+          {dir === 1 && (
+            <div style={{
+              position: 'absolute', top: 30, right: 24, padding: '6px 14px',
+              border: '2px solid var(--accent)', color: 'var(--accent)',
+              fontFamily: 'var(--mono)', letterSpacing: '0.16em', fontSize: 14,
+              transform: 'rotate(12deg)', fontWeight: 600,
+            }}>SAVE</div>
+          )}
+          {dir === -1 && (
+            <div style={{
+              position: 'absolute', top: 30, left: 24, padding: '6px 14px',
+              border: '2px solid var(--ink-soft)', color: 'var(--ink-soft)',
+              fontFamily: 'var(--mono)', letterSpacing: '0.16em', fontSize: 14,
+              transform: 'rotate(-12deg)', fontWeight: 600,
+            }}>PASS</div>
+          )}
+        </div>
+      </div>
+
+      {/* action buttons */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginTop: 24 }}>
+        <button onClick={() => swipe(-1)} className="press" style={{
+          width: 54, height: 54, borderRadius: '50%',
+          background: 'var(--surface)', border: '0.5px solid var(--line)',
+          color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon name="close" size={20} sw={1.4}/>
+        </button>
+        <button onClick={() => onNav('outfit', cur.id)} className="press" style={{
+          width: 46, height: 46, borderRadius: '50%', marginTop: 4,
+          background: 'transparent', border: '0.5px solid var(--line)',
+          color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon name="search" size={16} sw={1.4}/>
+        </button>
+        <button onClick={() => swipe(1)} className="press" style={{
+          width: 54, height: 54, borderRadius: '50%',
+          background: 'var(--accent)', color: '#fff',
+          border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon name="heart" size={20} sw={1.6}/>
+        </button>
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: 16, fontSize: 10,
+        color: 'var(--ink-mute)', fontFamily: 'var(--mono)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+        {saved} saved this session
+      </div>
+    </div>
+  );
+};
+
+Object.assign(window, { FitsScreen });
