@@ -167,10 +167,12 @@ export const TabBar = ({ active, onChange }) => {
   ];
   return (
     <div style={{
-      position: 'absolute', bottom: 0, left: 0, right: 0,
-      paddingBottom: 30, paddingTop: 10,
+      position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+      width: '100%', maxWidth: 480,
+      paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+      paddingTop: 10,
       background: 'linear-gradient(180deg, transparent, var(--bg) 30%)',
-      zIndex: 30,
+      zIndex: 100,
     }}>
       <div style={{
         margin: '0 16px', background: 'var(--surface)',

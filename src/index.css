@@ -44,13 +44,35 @@ body {
   font-family: var(--sans);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background:
-    radial-gradient(ellipse at 50% 0%, #2a2722 0%, #15130f 60%, #0a0907 100%);
+  min-height: 100dvh;
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+/* On desktop, frame the mobile app with a dark surround */
+@media (min-width: 520px) {
+  body {
+    background: #0e0c09;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+/* App root — full screen on mobile, centered column on desktop */
+.app-root {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  background: var(--bg);
+  position: relative;
+}
+
+@media (min-width: 520px) {
+  .app-root {
+    border-left: 0.5px solid rgba(255,255,255,0.06);
+    border-right: 0.5px solid rgba(255,255,255,0.06);
+    box-shadow: 0 0 100px rgba(0,0,0,0.6);
+  }
 }
 
 /* ── editorial typography utilities ── */

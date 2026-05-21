@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useCloset } from './store.jsx';
-import IOSDevice from './components/IOSFrame.jsx';
 import TweaksPanel, { TweakSection, TweakRadio, TweakToggle, TweakButton } from './components/TweaksPanel.jsx';
-import { TabBar, Icon } from './components/ui.jsx';
+import { TabBar } from './components/ui.jsx';
 import HomeScreen from './screens/HomeScreen.jsx';
 import FitsScreen from './screens/FitsScreen.jsx';
 import EditorScreen from './screens/EditorScreen.jsx';
@@ -35,6 +34,14 @@ export default function App() {
 
   const onBack = () => setRoute({ name: 'tab' });
 
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.shiftKey && e.key === 'T') setTweaksOpen((o) => !o);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
   const finishOnboarding = () => {
     setShowOnboarding(false);
     setTweak('showOnboarding', false);
@@ -60,31 +67,22 @@ export default function App() {
   const showTabs = !showOnboarding;
 
   return (
-    <div style={{ position: 'relative' }}>
-      <IOSDevice width={393} height={852} dark={!!tweaks.dark}>
-        <div
-          className={tweaks.dark ? 'app-shell dark' : 'app-shell'}
-          style={{
-            background: 'var(--bg)', color: 'var(--ink)',
-            minHeight: '100%', fontFamily: 'var(--sans)',
-            position: 'relative', paddingTop: 50,
-          }}
-        >
-          <div key={route.name + (route.id || '') + tab + showOnboarding}>
-            {screen}
-          </div>
-          {showTabs && (
-            <TabBar active={tab} onChange={(id) => { setTab(id); setRoute({ name: 'tab' }); }} />
-          )}
+    <div className={tweaks.dark ? 'app-root dark' : 'app-root'}>
+      <div
+        style={{
+          background: 'var(--bg)', color: 'var(--ink)',
+          minHeight: '100dvh', fontFamily: 'var(--sans)',
+          position: 'relative',
+          paddingTop: 'max(16px, env(safe-area-inset-top))',
+        }}
+      >
+        <div key={route.name + (route.id || '') + tab + showOnboarding}>
+          {screen}
         </div>
-      </IOSDevice>
-
-      {!tweaksOpen && (
-        <button className="tweaks-launcher" aria-label="Open tweaks"
-          onClick={() => setTweaksOpen(true)}>
-          <Icon name="sliders" size={19} sw={1.5} stroke="#29261b" />
-        </button>
-      )}
+        {showTabs && (
+          <TabBar active={tab} onChange={(id) => { setTab(id); setRoute({ name: 'tab' }); }} />
+        )}
+      </div>
 
       <TweaksPanel open={tweaksOpen} onClose={() => setTweaksOpen(false)} title="Tweaks">
         <TweakSection label="Theme">
@@ -116,3 +114,4 @@ export default function App() {
     </div>
   );
 }
+
