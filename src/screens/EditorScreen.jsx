@@ -154,7 +154,7 @@ function Step1Preview({ draft, setDraft, onNext, onBack }) {
 
       {/* Photo preview or color swatch */}
       {draft.image ? (
-        <div style={{ height: 280, borderRadius: 6, overflow: 'hidden', position: 'relative', border: '0.5px solid var(--line)', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ height: 280, borderRadius: 6, overflow: 'hidden', position: 'relative', border: '0.5px solid var(--line)', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <img src={draft.image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
           <button onClick={() => libraryRef.current?.click()} className="press" style={{
             position: 'absolute', top: 12, right: 12,

@@ -69,7 +69,7 @@ export const ItemTile = ({ item, height, mode = 'photo', showLabel = true, onCli
     return (
       <div onClick={onClick} className="press" style={{
         height: h, borderRadius: 4, overflow: 'hidden',
-        background: item.tone || 'var(--surface-2)',
+        background: 'var(--surface)',
         cursor: onClick ? 'pointer' : 'default', position: 'relative',
         border: frame ? '0.5px solid rgba(0,0,0,0.06)' : 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
