@@ -163,12 +163,24 @@ export default function FitsScreen({ mode, onNav }) {
 
       {/* header */}
       <div style={{ padding: '8px 20px 14px' }}>
-        <div className="eyebrow">Volume II · Outfits</div>
-        <div className="h-display" style={{ fontSize: 44, marginTop: 6, color: 'var(--ink)' }}>
-          Your <em style={{ color: 'var(--accent)' }}>fits</em>
-        </div>
-        <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 6, fontFamily: 'var(--serif)', fontStyle: 'italic' }}>
-          {outfits.length} composed · {items.length} pieces in rotation
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div className="eyebrow">Volume II · Outfits</div>
+            <div className="h-display" style={{ fontSize: 44, marginTop: 6, color: 'var(--ink)' }}>
+              Your <em style={{ color: 'var(--accent)' }}>fits</em>
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 6, fontFamily: 'var(--serif)', fontStyle: 'italic' }}>
+              {outfits.length} composed · {items.length} pieces in rotation
+            </div>
+          </div>
+          <button onClick={() => onNav('outfitEditor')} className="press" style={{
+            marginTop: 8, padding: '10px 16px', borderRadius: 100,
+            background: 'var(--ink)', color: 'var(--bg)',
+            fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em',
+            textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+          }}>
+            <Icon name="plus" size={12} sw={1.8} /> New
+          </button>
         </div>
       </div>
 

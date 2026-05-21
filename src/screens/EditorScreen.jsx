@@ -1,19 +1,33 @@
 // EDITOR screen — add a new item, multi-step flow
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useCloset } from '../store.jsx';
 import { Icon, Chip } from '../components/ui.jsx';
+
+// Compress uploaded image to max 800px, JPEG 0.82 quality
+function compressImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 const FieldBlock = ({ label, children }) => (
   <div style={{ marginBottom: 18 }}>
     <div className="eyebrow" style={{ marginBottom: 8 }}>{label}</div>
     {children}
-  </div>
-);
-
-const DetectRow = ({ label, value }) => (
-  <div>
-    <div className="eyebrow" style={{ fontSize: 8.5 }}>{label}</div>
-    <div style={{ marginTop: 2, fontSize: 13, fontFamily: 'var(--serif)', fontStyle: 'italic' }}>{value}</div>
   </div>
 );
 
@@ -33,29 +47,43 @@ const DetailField = ({ label, placeholder, value, onChange }) => (
 );
 
 // ─────────────────────────────────────────────────────────────
+// Step 0 — Capture: real camera / library / manual
 function Step0Capture({ onNext }) {
-  const recents = [
-    { tone: '#A89478', pat: 'grain' },
-    { tone: '#2E2A26', pat: 'leather' },
-    { tone: '#5C7796', pat: 'denim' },
-    { tone: '#191A1F', pat: 'check' },
-    { tone: '#C9B69E', pat: 'grain' },
-    { tone: '#5F2A2A', pat: 'solid' },
-  ];
+  const cameraRef  = useRef(null);
+  const libraryRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    setLoading(true);
+    try {
+      const image = await compressImage(file);
+      onNext({ image });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div>
+      {/* hidden file inputs */}
+      <input ref={cameraRef}  type="file" accept="image/*" capture="environment"
+        style={{ display: 'none' }} onChange={(e) => handleFile(e.target.files[0])} />
+      <input ref={libraryRef} type="file" accept="image/*"
+        style={{ display: 'none' }} onChange={(e) => handleFile(e.target.files[0])} />
+
       <div style={{ padding: '0 20px 16px' }}>
-        <button onClick={() => onNext({ tone: '#5C7796', pat: 'denim' })} className="press" style={{
+        <button onClick={() => cameraRef.current?.click()} disabled={loading} className="press" style={{
           width: '100%', padding: '22px 24px', background: 'var(--ink)', color: 'var(--bg)',
           borderRadius: 6, display: 'flex', alignItems: 'center', gap: 16, textAlign: 'left',
+          opacity: loading ? 0.6 : 1,
         }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.18em', opacity: 0.7, textTransform: 'uppercase' }}>Method 01</div>
             <div style={{ fontFamily: 'var(--serif)', fontSize: 28, lineHeight: 1, fontStyle: 'italic', marginTop: 6 }}>
-              Snap a photo
+              {loading ? 'Processing…' : 'Snap a photo'}
             </div>
-            <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>Auto background removal</div>
+            <div style={{ fontSize: 12, opacity: 0.7, marginTop: 6 }}>Use your camera</div>
           </div>
           <div style={{ opacity: 0.35, flexShrink: 0 }}>
             <Icon name="camera" size={52} sw={1} stroke="var(--bg)" />
@@ -63,43 +91,22 @@ function Step0Capture({ onNext }) {
         </button>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
-          <button onClick={() => onNext({ tone: '#A89478', pat: 'grain' })} className="press" style={{
+          <button onClick={() => libraryRef.current?.click()} disabled={loading} className="press" style={{
             padding: 16, background: 'var(--surface)', border: '0.5px solid var(--line)',
             borderRadius: 6, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left',
           }}>
             <Icon name="image" size={20} sw={1.4} />
-            <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 17, lineHeight: 1.15, marginTop: 10, whiteSpace: 'nowrap' }}>Library</div>
+            <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 17, lineHeight: 1.15, marginTop: 10 }}>Library</div>
             <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', marginTop: 4 }}>Pick from photos</div>
           </button>
-          <button onClick={() => onNext({ tone: '#2E2A26', pat: 'leather' })} className="press" style={{
+          <button onClick={() => onNext({ image: null })} disabled={loading} className="press" style={{
             padding: 16, background: 'var(--surface)', border: '0.5px solid var(--line)',
             borderRadius: 6, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left',
           }}>
-            <Icon name="cloud" size={20} sw={1.4} />
-            <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 17, lineHeight: 1.15, marginTop: 10, whiteSpace: 'nowrap' }}>From URL</div>
-            <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', marginTop: 4 }}>A shop site</div>
+            <Icon name="edit" size={20} sw={1.4} />
+            <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 17, lineHeight: 1.15, marginTop: 10 }}>Manual</div>
+            <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', marginTop: 4 }}>Set color & details</div>
           </button>
-        </div>
-      </div>
-
-      <hr className="rule" style={{ margin: '8px 20px' }} />
-
-      <div style={{ padding: '14px 20px 0' }}>
-        <div className="eyebrow" style={{ marginBottom: 10 }}>From camera roll</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-          {recents.map((r, i) => (
-            <button key={i} onClick={() => onNext({ tone: r.tone, pat: r.pat })}
-              className={`press ${r.pat !== 'solid' ? `pat-${r.pat}` : ''}`}
-              style={{
-                aspectRatio: '1', background: r.tone, borderRadius: 3,
-                border: '0.5px solid rgba(0,0,0,0.06)', position: 'relative',
-              }}>
-              <div style={{
-                position: 'absolute', inset: 0,
-                background: 'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 50%, rgba(0,0,0,0.1))',
-              }} />
-            </button>
-          ))}
         </div>
       </div>
     </div>
@@ -107,76 +114,82 @@ function Step0Capture({ onNext }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-function Step1Process({ draft, onNext, onBack }) {
-  const [scanning, setScanning] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setScanning(false), 1400);
-    return () => clearTimeout(t);
-  }, []);
+// Step 1 — Preview: confirm photo or pick color manually
+function Step1Preview({ draft, setDraft, onNext, onBack }) {
+  const libraryRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    setLoading(true);
+    try {
+      const image = await compressImage(file);
+      setDraft((d) => ({ ...d, image }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const tones = ['#A89478','#2E2A26','#5C7796','#F1ECE2','#5F2A2A','#6E6857','#1A1A22','#B6291E','#D3C5A8','#15151A'];
 
   return (
     <div style={{ padding: '0 20px' }}>
-      <div className="eyebrow" style={{ marginBottom: 10 }}>Background removed · AI</div>
+      <input ref={libraryRef} type="file" accept="image/*"
+        style={{ display: 'none' }} onChange={(e) => handleFile(e.target.files[0])} />
 
-      <div style={{
-        background: 'var(--surface-2)', borderRadius: 6, padding: 24,
-        height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        position: 'relative', overflow: 'hidden',
-        backgroundImage: `
-          radial-gradient(circle at 25% 25%, rgba(0,0,0,0.04) 1px, transparent 1.5px),
-          radial-gradient(circle at 75% 75%, rgba(0,0,0,0.04) 1px, transparent 1.5px)
-        `,
-        backgroundSize: '12px 12px',
-      }}>
-        <div className={draft.pat !== 'solid' ? `pat-${draft.pat}` : ''} style={{
-          width: 180, height: 220, background: draft.tone, borderRadius: 4,
-          boxShadow: '0 24px 40px rgba(0,0,0,0.15)',
-          position: 'relative', overflow: 'hidden',
-        }}>
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.08), transparent 40%, rgba(0,0,0,0.1))',
-          }} />
-        </div>
-
-        {scanning && (
-          <>
-            <div style={{
-              position: 'absolute', left: 0, right: 0, height: 2,
-              background: 'var(--accent)', boxShadow: '0 0 18px var(--accent)',
-              animation: 'scan 1.4s linear infinite', top: 0,
-            }} />
-            <div style={{
-              position: 'absolute', top: 12, right: 12,
-              background: 'var(--ink)', color: 'var(--bg)',
-              padding: '4px 8px', borderRadius: 4,
-              fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase',
-            }}>Analysing…</div>
-          </>
-        )}
-        {!scanning && (
-          <div style={{
+      {/* Photo preview or color swatch */}
+      {draft.image ? (
+        <div style={{ height: 280, borderRadius: 6, overflow: 'hidden', position: 'relative', border: '0.5px solid var(--line)' }}>
+          <img src={draft.image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <button onClick={() => libraryRef.current?.click()} className="press" style={{
             position: 'absolute', top: 12, right: 12,
-            background: '#1f8a5b', color: '#fff',
-            padding: '4px 8px', borderRadius: 4,
-            fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '0.14em',
-            textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 4,
-          }}><Icon name="check" size={10} sw={2} stroke="#fff" /> Ready</div>
-        )}
-      </div>
-
-      <div style={{
-        marginTop: 14, padding: 14, background: 'var(--surface)',
-        border: '0.5px solid var(--line)', borderRadius: 4,
-      }}>
-        <div className="eyebrow" style={{ marginBottom: 10 }}>Detected</div>
-        <div style={{ display: 'grid', gap: 10, gridTemplateColumns: '1fr 1fr' }}>
-          <DetectRow label="Category" value="Jacket · Outerwear" />
-          <DetectRow label="Color" value="Indigo blue" />
-          <DetectRow label="Material" value="Denim · Cotton" />
-          <DetectRow label="Confidence" value="92%" />
+            background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(8px)',
+            color: '#fff', borderRadius: 100, padding: '6px 12px',
+            fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase',
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}>
+            <Icon name="camera" size={11} sw={1.4} stroke="#fff" /> Change
+          </button>
         </div>
-      </div>
+      ) : (
+        <div>
+          <div className={draft.pat !== 'solid' ? `pat-${draft.pat}` : ''} style={{
+            height: 200, background: draft.tone, borderRadius: 6, border: '0.5px solid var(--line)',
+            position: 'relative', overflow: 'hidden',
+          }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0.08), transparent 40%, rgba(0,0,0,0.1))' }} />
+            <button onClick={() => libraryRef.current?.click()} className="press" style={{
+              position: 'absolute', top: 12, right: 12,
+              background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)',
+              color: '#fff', borderRadius: 100, padding: '6px 12px',
+              fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '0.12em', textTransform: 'uppercase',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <Icon name="camera" size={11} sw={1.4} stroke="#fff" /> Add photo
+            </button>
+          </div>
+
+          {/* Color picker for manual mode */}
+          <div style={{ marginTop: 14 }}>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>Color</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {tones.map((c) => (
+                <button key={c} onClick={() => setDraft((d) => ({ ...d, tone: c }))} className="press" style={{
+                  width: 32, height: 32, borderRadius: '50%', background: c, padding: 0,
+                  border: draft.tone === c ? '2.5px solid var(--ink)' : '0.5px solid rgba(0,0,0,0.12)',
+                  outline: draft.tone === c ? '1.5px solid var(--bg)' : 'none', outlineOffset: 1,
+                }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div style={{ marginTop: 10, textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-soft)', letterSpacing: '0.14em' }}>
+          Processing image…
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
         <button onClick={onBack} className="press" style={{
@@ -186,16 +199,16 @@ function Step1Process({ draft, onNext, onBack }) {
           textTransform: 'uppercase', color: 'var(--ink-soft)',
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
-          <Icon name="back" size={12} /> Retake
+          <Icon name="back" size={12} /> Back
         </button>
-        <button onClick={onNext} disabled={scanning} className="press" style={{
-          flex: 1, padding: 14, background: scanning ? 'var(--ink-mute)' : 'var(--ink)',
-          color: 'var(--bg)', borderRadius: 100,
+        <button onClick={onNext} disabled={loading} className="press" style={{
+          flex: 1, padding: 14, background: 'var(--ink)',
+          color: 'var(--bg)', borderRadius: 100, opacity: loading ? 0.5 : 1,
           fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '0.14em',
           textTransform: 'uppercase', fontWeight: 500,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
         }}>
-          {scanning ? 'Processing…' : <>Continue <Icon name="arrowR" size={13} /></>}
+          Continue <Icon name="arrowR" size={13} />
         </button>
       </div>
     </div>
@@ -203,10 +216,11 @@ function Step1Process({ draft, onNext, onBack }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Step 2 — Tag & details
 function Step2Tag({ draft, setDraft, onDone, onBack }) {
-  const cats = ['OUTERWEAR', 'TOPS', 'BOTTOMS', 'DRESSES', 'SHOES', 'ACCESS.'];
+  const cats    = ['OUTERWEAR', 'TOPS', 'BOTTOMS', 'DRESSES', 'SHOES', 'ACCESS.'];
   const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
-  const tones = ['#5C7796', '#2E2A26', '#A89478', '#F1ECE2', '#5F2A2A', '#6E6857', '#1A1A22', '#B6291E'];
+  const tones   = ['#A89478','#2E2A26','#5C7796','#F1ECE2','#5F2A2A','#6E6857','#1A1A22','#B6291E'];
 
   const setField = (key, value) => setDraft((d) => ({ ...d, [key]: value }));
 
@@ -220,29 +234,33 @@ function Step2Tag({ draft, setDraft, onDone, onBack }) {
     if (t && !draft.tags.includes(t)) setField('tags', [...draft.tags, t]);
   };
 
-  // preset suggestions always shown, plus any custom tags the user added
-  const presetTags = ['casual', 'vintage', 'everyday', 'spring', 'denim', 'blue'];
-  const allTags = [...presetTags, ...draft.tags.filter((t) => !presetTags.includes(t))];
+  const presetTags = ['casual', 'vintage', 'everyday', 'workwear', 'evening', 'classic'];
+  const allTags    = [...presetTags, ...draft.tags.filter((t) => !presetTags.includes(t))];
 
   return (
     <div style={{ padding: '0 20px' }}>
-      {/* big preview + name */}
+      {/* preview + name */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
-        <div className={draft.pat !== 'solid' ? `pat-${draft.pat}` : ''} style={{
-          width: 92, height: 116, background: draft.tone, borderRadius: 4,
-          border: '0.5px solid rgba(0,0,0,0.08)', position: 'relative', flexShrink: 0, overflow: 'hidden',
+        <div style={{
+          width: 92, height: 116, borderRadius: 4, flexShrink: 0, overflow: 'hidden',
+          border: '0.5px solid rgba(0,0,0,0.08)',
+          ...(draft.image
+            ? { backgroundImage: `url(${draft.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : { background: draft.tone }),
         }}>
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.08), transparent 40%, rgba(0,0,0,0.1))',
-          }} />
+          {!draft.image && (
+            <div className={draft.pat !== 'solid' ? `pat-${draft.pat}` : ''}
+              style={{ width: '100%', height: '100%', background: 'transparent',
+                backgroundImage: draft.pat !== 'solid' ? undefined : 'none',
+              }} />
+          )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="eyebrow">Name</div>
           <input
             value={draft.name}
             onChange={(e) => setField('name', e.target.value)}
-            placeholder="Name this piece"
+            placeholder="Name this piece…"
             style={{
               width: '100%', marginTop: 4, padding: '4px 0',
               fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 22,
@@ -263,18 +281,20 @@ function Step2Tag({ draft, setDraft, onDone, onBack }) {
         </div>
       </FieldBlock>
 
-      {/* color */}
-      <FieldBlock label="Color">
-        <div style={{ display: 'flex', gap: 8 }}>
-          {tones.map((c) => (
-            <button key={c} onClick={() => setField('tone', c)} className="press" style={{
-              width: 30, height: 30, borderRadius: '50%', background: c,
-              border: draft.tone === c ? '2px solid var(--ink)' : '0.5px solid rgba(0,0,0,0.1)',
-              padding: 0,
-            }} />
-          ))}
-        </div>
-      </FieldBlock>
+      {/* color (only relevant when no photo) */}
+      {!draft.image && (
+        <FieldBlock label="Color">
+          <div style={{ display: 'flex', gap: 8 }}>
+            {tones.map((c) => (
+              <button key={c} onClick={() => setField('tone', c)} className="press" style={{
+                width: 30, height: 30, borderRadius: '50%', background: c,
+                border: draft.tone === c ? '2px solid var(--ink)' : '0.5px solid rgba(0,0,0,0.1)',
+                padding: 0,
+              }} />
+            ))}
+          </div>
+        </FieldBlock>
+      )}
 
       {/* season */}
       <FieldBlock label="Season">
@@ -345,14 +365,8 @@ export default function EditorScreen({ onNav }) {
   const { addItem } = useCloset();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState({
-    name: 'Vintage Denim Jacket',
-    cat: 'OUTERWEAR',
-    tone: '#A89478',
-    pat: 'solid',
-    tags: ['casual', 'vintage', 'everyday', 'spring', 'denim', 'blue'],
-    season: ['Spring'],
-    brand: '',
-    price: '',
+    name: '', cat: 'TOPS', tone: '#A89478', pat: 'solid',
+    image: null, tags: [], season: [], brand: '', price: '',
   });
 
   const save = () => {
@@ -375,7 +389,7 @@ export default function EditorScreen({ onNav }) {
         </div>
       </div>
 
-      {/* progress dots */}
+      {/* progress bar */}
       <div style={{ display: 'flex', gap: 4, padding: '0 20px 18px' }}>
         {[0, 1, 2].map((i) => (
           <div key={i} style={{
@@ -390,7 +404,7 @@ export default function EditorScreen({ onNav }) {
         <Step0Capture onNext={(d) => { setDraft((prev) => ({ ...prev, ...d })); setStep(1); }} />
       )}
       {step === 1 && (
-        <Step1Process draft={draft} onNext={() => setStep(2)} onBack={() => setStep(0)} />
+        <Step1Preview draft={draft} setDraft={setDraft} onNext={() => setStep(2)} onBack={() => setStep(0)} />
       )}
       {step === 2 && (
         <Step2Tag draft={draft} setDraft={setDraft} onDone={save} onBack={() => setStep(1)} />

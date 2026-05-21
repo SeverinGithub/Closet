@@ -17,41 +17,56 @@ function costPerWear(item) {
 }
 
 export default function ItemDetail({ itemId, mode, onBack, onNav }) {
-  const { items, itemsById, outfits } = useCloset();
+  const { items, itemsById, outfits, deleteItem } = useCloset();
 
   const item = itemsById[itemId] || items[0];
-  const inOutfits = outfits.filter((o) => o.items.includes(item.id));
+  if (!item) { onBack(); return null; }
+
+  const inOutfits   = outfits.filter((o) => o.items.includes(item.id));
   const combineWith = items.filter((i) => i.cat !== item.cat && i.id !== item.id).slice(0, 3);
+
+  const handleDelete = () => {
+    if (window.confirm(`Remove "${item.name}" from your closet?`)) {
+      deleteItem(item.id);
+      onBack();
+    }
+  };
 
   return (
     <div className="fade-in" style={{ paddingBottom: 110 }}>
-      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ padding: '4px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <button onClick={onBack} className="press" style={{ padding: 8 }}>
           <Icon name="back" size={20} sw={1.4} />
         </button>
+        <button onClick={handleDelete} className="press" style={{
+          padding: '6px 14px', borderRadius: 100,
+          border: '0.5px solid var(--line)', background: 'transparent',
+          fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '0.12em',
+          textTransform: 'uppercase', color: 'var(--accent)',
+        }}>
+          Remove
+        </button>
       </div>
 
-      {/* hero swatch */}
-      <div className={item.pat !== 'solid' ? `pat-${item.pat}` : ''} style={{
-        margin: '0 20px', height: 320, background: item.tone,
-        borderRadius: 6, position: 'relative', overflow: 'hidden',
-        border: '0.5px solid rgba(0,0,0,0.06)',
-      }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.1), transparent 30%, transparent 70%, rgba(0,0,0,0.18))',
-        }} />
-        <div style={{
-          position: 'absolute', top: 14, left: 16,
-          fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.18em',
-          textTransform: 'uppercase', color: tonalText(item.tone, 0.8),
-        }}>{item.cat}</div>
-        <div style={{
-          position: 'absolute', bottom: 18, left: 18, right: 18,
-          fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 36, lineHeight: 0.95,
-          color: tonalText(item.tone, 1),
-        }}>{item.name}</div>
-      </div>
+      {/* hero — real photo or color swatch */}
+      {item.image ? (
+        <div style={{ margin: '0 20px', height: 320, borderRadius: 6, overflow: 'hidden', position: 'relative', border: '0.5px solid rgba(0,0,0,0.06)' }}>
+          <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.12), transparent 35%, transparent 65%, rgba(0,0,0,0.32))' }} />
+          <div style={{ position: 'absolute', top: 14, left: 16, fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(245,240,228,0.85)' }}>{item.cat}</div>
+          <div style={{ position: 'absolute', bottom: 18, left: 18, right: 18, fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 36, lineHeight: 0.95, color: 'rgba(245,240,228,1)' }}>{item.name}</div>
+        </div>
+      ) : (
+        <div className={item.pat !== 'solid' ? `pat-${item.pat}` : ''} style={{
+          margin: '0 20px', height: 320, background: item.tone,
+          borderRadius: 6, position: 'relative', overflow: 'hidden',
+          border: '0.5px solid rgba(0,0,0,0.06)',
+        }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(255,255,255,0.1), transparent 30%, transparent 70%, rgba(0,0,0,0.18))' }} />
+          <div style={{ position: 'absolute', top: 14, left: 16, fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: tonalText(item.tone, 0.8) }}>{item.cat}</div>
+          <div style={{ position: 'absolute', bottom: 18, left: 18, right: 18, fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 36, lineHeight: 0.95, color: tonalText(item.tone, 1) }}>{item.name}</div>
+        </div>
+      )}
 
       {/* stats */}
       <div style={{ padding: '20px 20px 0' }}>

@@ -12,6 +12,7 @@ import StatsScreen from './screens/StatsScreen.jsx';
 import WardrobeScreen from './screens/WardrobeScreen.jsx';
 import AIScreen from './screens/AIScreen.jsx';
 import OnboardingScreen from './screens/OnboardingScreen.jsx';
+import OutfitEditorScreen from './screens/OutfitEditorScreen.jsx';
 
 export default function App() {
   const { tweaks, setTweak } = useCloset();
@@ -56,8 +57,9 @@ export default function App() {
     if (route.name === 'item')     screen = <ItemDetail itemId={route.id} {...props} />;
     if (route.name === 'calendar') screen = <CalendarScreen {...props} />;
     if (route.name === 'stats')    screen = <StatsScreen {...props} />;
-    if (route.name === 'wardrobe') screen = <WardrobeScreen {...props} />;
-    if (route.name === 'ai')       screen = <AIScreen {...props} />;
+    if (route.name === 'wardrobe')     screen = <WardrobeScreen {...props} />;
+    if (route.name === 'ai')           screen = <AIScreen {...props} />;
+    if (route.name === 'outfitEditor') screen = <OutfitEditorScreen {...props} />;
   } else {
     if (tab === 'home')   screen = <HomeScreen mode={tweaks.itemMode} onNav={nav} />;
     if (tab === 'fits')   screen = <FitsScreen mode={tweaks.itemMode} onNav={nav} />;

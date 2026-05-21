@@ -74,7 +74,7 @@ export const WEAR_LOG = {
   '2026-03-30': 'o08', '2026-03-31': 'o09',
 };
 
-export const TODAY_ISO = '2026-04-02';
+export const TODAY_ISO = new Date().toISOString().slice(0, 10);
 
 // Default aspect ratio per category, used for newly added items
 export const AR_BY_CAT = {

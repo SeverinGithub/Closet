@@ -3,7 +3,8 @@ import {
   ITEMS, OUTFITS, CATEGORIES, WEAR_LOG, TODAY_ISO, AR_BY_CAT, formatLast,
 } from './data.js';
 
-const STORAGE_KEY = 'closet:v1';
+// Bump version to reset stale alpha state
+const STORAGE_KEY = 'closet:v2';
 
 const TWEAK_DEFAULTS = {
   dark: false,
@@ -14,6 +15,7 @@ const TWEAK_DEFAULTS = {
 function defaultState() {
   return {
     items: ITEMS,
+    outfits: OUTFITS,
     wearLog: WEAR_LOG,
     liked: [],
     tweaks: TWEAK_DEFAULTS,
@@ -26,10 +28,11 @@ function loadState() {
     if (!raw) return defaultState();
     const parsed = JSON.parse(raw);
     return {
-      items: Array.isArray(parsed.items) ? parsed.items : ITEMS,
+      items:   Array.isArray(parsed.items)   ? parsed.items   : ITEMS,
+      outfits: Array.isArray(parsed.outfits) ? parsed.outfits : OUTFITS,
       wearLog: parsed.wearLog && typeof parsed.wearLog === 'object' ? parsed.wearLog : WEAR_LOG,
-      liked: Array.isArray(parsed.liked) ? parsed.liked : [],
-      tweaks: { ...TWEAK_DEFAULTS, ...(parsed.tweaks || {}) },
+      liked:   Array.isArray(parsed.liked)   ? parsed.liked   : [],
+      tweaks:  { ...TWEAK_DEFAULTS, ...(parsed.tweaks || {}) },
     };
   } catch {
     return defaultState();
@@ -55,33 +58,55 @@ export function ClosetProvider({ children }) {
   );
 
   const api = useMemo(() => {
+    // ── Items ──────────────────────────────────────────────────
     const addItem = (draft) => {
       const item = {
-        id: 'u' + Date.now().toString(36),
-        name: (draft.name || '').trim() || 'Untitled piece',
-        cat: draft.cat || 'TOPS',
-        tone: draft.tone || '#A89478',
-        pat: draft.pat || 'solid',
-        ar: AR_BY_CAT[draft.cat] || 1.2,
-        worn: 0,
-        last: '—',
-        tags: draft.tags || [],
+        id:     'u' + Date.now().toString(36),
+        name:   (draft.name || '').trim() || 'Untitled piece',
+        cat:    draft.cat || 'TOPS',
+        tone:   draft.tone || '#A89478',
+        pat:    draft.pat || 'solid',
+        image:  draft.image || null,          // base64 photo
+        ar:     AR_BY_CAT[draft.cat] || 1.2,
+        worn:   0,
+        last:   '—',
+        tags:   draft.tags || [],
         season: draft.season || [],
-        brand: (draft.brand || '').trim(),
-        price: (draft.price || '').trim(),
+        brand:  (draft.brand || '').trim(),
+        price:  (draft.price || '').trim(),
       };
       setState((s) => ({ ...s, items: [...s.items, item] }));
       return item;
     };
 
-    // Record an outfit as worn on a date. Idempotent per day: re-assigning a
-    // day moves the wear count off the previously logged outfit's pieces.
+    const deleteItem = (id) => {
+      setState((s) => ({ ...s, items: s.items.filter((i) => i.id !== id) }));
+    };
+
+    // ── Outfits ────────────────────────────────────────────────
+    const addOutfit = (draft) => {
+      const outfit = {
+        id:       'o' + Date.now().toString(36),
+        name:     (draft.name || '').trim() || 'My Outfit',
+        mood:     draft.mood || 'CASUAL',
+        items:    draft.items || [],
+        occasion: draft.occasion || [],
+      };
+      setState((s) => ({ ...s, outfits: [...s.outfits, outfit] }));
+      return outfit;
+    };
+
+    const deleteOutfit = (id) => {
+      setState((s) => ({ ...s, outfits: s.outfits.filter((o) => o.id !== id) }));
+    };
+
+    // ── Wear log ───────────────────────────────────────────────
     const wearOutfit = (outfitId, iso = TODAY_ISO) => {
       setState((s) => {
-        const prevId = s.wearLog[iso];
+        const prevId    = s.wearLog[iso];
         if (prevId === outfitId) return s;
-        const prevOutfit = OUTFITS.find((o) => o.id === prevId);
-        const nextOutfit = OUTFITS.find((o) => o.id === outfitId);
+        const prevOutfit = s.outfits.find((o) => o.id === prevId);
+        const nextOutfit = s.outfits.find((o) => o.id === outfitId);
         if (!nextOutfit) return s;
         const items = s.items.map((it) => {
           let worn = it.worn;
@@ -97,6 +122,7 @@ export function ClosetProvider({ children }) {
       });
     };
 
+    // ── Likes ──────────────────────────────────────────────────
     const toggleLike = (outfitId) => {
       setState((s) => ({
         ...s,
@@ -108,28 +134,27 @@ export function ClosetProvider({ children }) {
 
     const likeOutfit = (outfitId) => {
       setState((s) => (
-        s.liked.includes(outfitId)
-          ? s
-          : { ...s, liked: [...s.liked, outfitId] }
+        s.liked.includes(outfitId) ? s : { ...s, liked: [...s.liked, outfitId] }
       ));
     };
 
+    // ── Tweaks ─────────────────────────────────────────────────
     const setTweak = (key, value) => {
       setState((s) => ({ ...s, tweaks: { ...s.tweaks, [key]: value } }));
     };
 
-    return { addItem, wearOutfit, toggleLike, likeOutfit, setTweak };
+    return { addItem, deleteItem, addOutfit, deleteOutfit, wearOutfit, toggleLike, likeOutfit, setTweak };
   }, []);
 
   const value = {
-    items: state.items,
+    items:      state.items,
     itemsById,
-    outfits: OUTFITS,
+    outfits:    state.outfits,
     categories: CATEGORIES,
-    wearLog: state.wearLog,
-    liked: state.liked,
-    tweaks: state.tweaks,
-    todayIso: TODAY_ISO,
+    wearLog:    state.wearLog,
+    liked:      state.liked,
+    tweaks:     state.tweaks,
+    todayIso:   TODAY_ISO,
     ...api,
   };
 

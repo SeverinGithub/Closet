@@ -64,6 +64,38 @@ export const ItemTile = ({ item, height, mode = 'photo', showLabel = true, onCli
   const h = height || Math.round(160 * ar);
   const patClass = item.pat && item.pat !== 'solid' ? `pat-${item.pat}` : '';
 
+  // Real photo — show the uploaded image
+  if (item.image) {
+    return (
+      <div onClick={onClick} className="press" style={{
+        height: h, borderRadius: 4, overflow: 'hidden',
+        backgroundImage: `url(${item.image})`,
+        backgroundSize: 'cover', backgroundPosition: 'center',
+        cursor: onClick ? 'pointer' : 'default', position: 'relative',
+        border: frame ? '0.5px solid rgba(0,0,0,0.06)' : 'none',
+      }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(180deg, rgba(0,0,0,0.12), transparent 35%, transparent 65%, rgba(0,0,0,0.28))',
+        }} />
+        {showLabel && (
+          <>
+            <div style={{
+              position: 'absolute', top: 8, left: 10,
+              fontFamily: 'var(--mono)', fontSize: 8.5, letterSpacing: '0.14em',
+              color: 'rgba(245,240,228,0.85)', textTransform: 'uppercase',
+            }}>{item.cat}</div>
+            <div style={{
+              position: 'absolute', bottom: 8, left: 10, right: 10,
+              fontFamily: 'var(--serif)', fontSize: 14, lineHeight: 1, fontStyle: 'italic',
+              color: 'rgba(245,240,228,1)',
+            }}>{item.name}</div>
+          </>
+        )}
+      </div>
+    );
+  }
+
   if (mode === 'cutout') {
     return (
       <div onClick={onClick} className="press" style={{
