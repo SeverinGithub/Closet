@@ -46,32 +46,55 @@ body {
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
   background: var(--bg);
-  overflow-x: hidden;
 }
 
-/* On desktop, frame the mobile app with a dark surround */
+/* ── Desktop: dark editorial surround ── */
 @media (min-width: 520px) {
   body {
-    background: #0e0c09;
+    background:
+      radial-gradient(ellipse at 30% 0%, #1e1a15 0%, #0a0906 60%),
+      radial-gradient(ellipse at 70% 100%, #18140f 0%, #080705 70%);
     display: flex;
     justify-content: center;
+    align-items: flex-start;
+    min-height: 100dvh;
+  }
+
+  /* subtle brand mark in the dark surround — bottom left corner */
+  body::after {
+    content: 'The Closet · Beta';
+    position: fixed;
+    bottom: 28px;
+    left: 32px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.12);
+    pointer-events: none;
   }
 }
 
-/* App root — full screen on mobile, centered column on desktop */
+/* ── App root — full screen mobile, centered column desktop ── */
 .app-root {
   width: 100%;
-  max-width: 480px;
+  max-width: 430px;
   min-height: 100dvh;
   background: var(--bg);
   position: relative;
+  /* clip horizontal overflow (horizontal scroll rails) without breaking fixed children */
+  overflow-x: clip;
+  flex-shrink: 0;
 }
 
 @media (min-width: 520px) {
   .app-root {
-    border-left: 0.5px solid rgba(255,255,255,0.06);
-    border-right: 0.5px solid rgba(255,255,255,0.06);
-    box-shadow: 0 0 100px rgba(0,0,0,0.6);
+    border-left: 0.5px solid rgba(255, 255, 255, 0.07);
+    border-right: 0.5px solid rgba(255, 255, 255, 0.07);
+    box-shadow:
+      0 0 0 0.5px rgba(255,255,255,0.04),
+      0 32px 80px rgba(0,0,0,0.55),
+      0 0 120px rgba(0,0,0,0.4);
   }
 }
 
