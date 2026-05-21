@@ -247,7 +247,6 @@ export const OutfitCard = ({ outfit, onClick, large = false }) => {
   const items = outfit.items.map((id) => itemsById[id]).filter(Boolean);
   if (items.length === 0) return null;
   const cells = items.slice(0, 4);
-  while (cells.length < 4) cells.push(items[cells.length % items.length]);
 
   return (
     <div onClick={onClick} className="press" style={{
