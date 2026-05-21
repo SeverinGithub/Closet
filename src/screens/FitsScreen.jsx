@@ -67,15 +67,27 @@ function SwipeGenerator({ onNav }) {
         }}>
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1,
-            background: 'var(--line)', aspectRatio: '1 / 1.15',
+            background: 'var(--line)',
           }}>
             {items.slice(0, 4).map((it) => (
-              <div key={it.id} className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
-                style={{ background: it.tone, position: 'relative', overflow: 'hidden' }}>
+              <div key={it.id} style={{ position: 'relative', paddingBottom: '100%' }}>
                 <div style={{
-                  position: 'absolute', inset: 0,
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 40%, rgba(0,0,0,0.1))',
-                }} />
+                  position: 'absolute', inset: 0, overflow: 'hidden',
+                  background: it.image ? 'var(--surface)' : it.tone,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {it.image ? (
+                    <img src={it.image} alt={it.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                  ) : (
+                    <div className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
+                      style={{ position: 'absolute', inset: 0 }} />
+                  )}
+                  <div style={{
+                    position: 'absolute', inset: 0, pointerEvents: 'none',
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 40%, rgba(0,0,0,0.1))',
+                  }} />
+                </div>
               </div>
             ))}
           </div>
