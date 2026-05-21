@@ -38,14 +38,25 @@ export default function ItemDetail({ itemId, mode, onBack, onNav }) {
         <button onClick={onBack} className="press" style={{ padding: 8 }}>
           <Icon name="back" size={20} sw={1.4} />
         </button>
-        <button onClick={handleDelete} className="press" style={{
-          padding: '6px 14px', borderRadius: 100,
-          border: '0.5px solid var(--line)', background: 'transparent',
-          fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '0.12em',
-          textTransform: 'uppercase', color: 'var(--accent)',
-        }}>
-          Remove
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => onNav('itemEditor', item.id)} className="press" style={{
+            padding: '6px 14px', borderRadius: 100,
+            border: '0.5px solid var(--line)', background: 'transparent',
+            fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '0.12em',
+            textTransform: 'uppercase', color: 'var(--ink)',
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}>
+            <Icon name="edit" size={12} sw={1.4} /> Edit
+          </button>
+          <button onClick={handleDelete} className="press" style={{
+            padding: '6px 14px', borderRadius: 100,
+            border: '0.5px solid var(--line)', background: 'transparent',
+            fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '0.12em',
+            textTransform: 'uppercase', color: 'var(--accent)',
+          }}>
+            Remove
+          </button>
+        </div>
       </div>
 
       {/* hero — real photo or color swatch */}

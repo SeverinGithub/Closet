@@ -13,6 +13,7 @@ import WardrobeScreen from './screens/WardrobeScreen.jsx';
 import AIScreen from './screens/AIScreen.jsx';
 import OnboardingScreen from './screens/OnboardingScreen.jsx';
 import OutfitEditorScreen from './screens/OutfitEditorScreen.jsx';
+import ItemEditorScreen from './screens/ItemEditorScreen.jsx';
 
 export default function App() {
   const { tweaks, setTweak } = useCloset();
@@ -60,6 +61,7 @@ export default function App() {
     if (route.name === 'wardrobe')     screen = <WardrobeScreen {...props} />;
     if (route.name === 'ai')           screen = <AIScreen {...props} />;
     if (route.name === 'outfitEditor') screen = <OutfitEditorScreen {...props} />;
+    if (route.name === 'itemEditor')   screen = <ItemEditorScreen itemId={route.id} onBack={onBack} />;
   } else {
     if (tab === 'home')   screen = <HomeScreen mode={tweaks.itemMode} onNav={nav} />;
     if (tab === 'fits')   screen = <FitsScreen mode={tweaks.itemMode} onNav={nav} />;

@@ -83,6 +83,13 @@ export function ClosetProvider({ children }) {
       setState((s) => ({ ...s, items: s.items.filter((i) => i.id !== id) }));
     };
 
+    const updateItem = (id, changes) => {
+      setState((s) => ({
+        ...s,
+        items: s.items.map((i) => i.id === id ? { ...i, ...changes } : i),
+      }));
+    };
+
     // ── Outfits ────────────────────────────────────────────────
     const addOutfit = (draft) => {
       const outfit = {
@@ -143,7 +150,7 @@ export function ClosetProvider({ children }) {
       setState((s) => ({ ...s, tweaks: { ...s.tweaks, [key]: value } }));
     };
 
-    return { addItem, deleteItem, addOutfit, deleteOutfit, wearOutfit, toggleLike, likeOutfit, setTweak };
+    return { addItem, deleteItem, updateItem, addOutfit, deleteOutfit, wearOutfit, toggleLike, likeOutfit, setTweak };
   }, []);
 
   const value = {
