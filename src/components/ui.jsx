@@ -64,22 +64,28 @@ export const ItemTile = ({ item, height, mode = 'photo', showLabel = true, onCli
   const h = height || Math.round(160 * ar);
   const patClass = item.pat && item.pat !== 'solid' ? `pat-${item.pat}` : '';
 
-  // Real photo — show the uploaded image
+  // Real photo — full garment visible, no cropping
   if (item.image) {
     return (
       <div onClick={onClick} className="press" style={{
         height: h, borderRadius: 4, overflow: 'hidden',
-        backgroundImage: `url(${item.image})`,
-        backgroundSize: 'cover', backgroundPosition: 'center',
+        background: item.tone || 'var(--surface-2)',
         cursor: onClick ? 'pointer' : 'default', position: 'relative',
         border: frame ? '0.5px solid rgba(0,0,0,0.06)' : 'none',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(180deg, rgba(0,0,0,0.12), transparent 35%, transparent 65%, rgba(0,0,0,0.28))',
-        }} />
+        <img
+          src={item.image}
+          alt={item.name}
+          style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+        />
         {showLabel && (
           <>
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(180deg, transparent, transparent 55%, rgba(0,0,0,0.45))',
+              pointerEvents: 'none',
+            }} />
             <div style={{
               position: 'absolute', top: 8, left: 10,
               fontFamily: 'var(--mono)', fontSize: 8.5, letterSpacing: '0.14em',

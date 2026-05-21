@@ -50,8 +50,8 @@ export default function ItemDetail({ itemId, mode, onBack, onNav }) {
 
       {/* hero — real photo or color swatch */}
       {item.image ? (
-        <div style={{ margin: '0 20px', height: 320, borderRadius: 6, overflow: 'hidden', position: 'relative', border: '0.5px solid rgba(0,0,0,0.06)' }}>
-          <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{ margin: '0 20px', height: 320, borderRadius: 6, overflow: 'hidden', position: 'relative', border: '0.5px solid rgba(0,0,0,0.06)', background: item.tone || 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.12), transparent 35%, transparent 65%, rgba(0,0,0,0.32))' }} />
           <div style={{ position: 'absolute', top: 14, left: 16, fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(245,240,228,0.85)' }}>{item.cat}</div>
           <div style={{ position: 'absolute', bottom: 18, left: 18, right: 18, fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 36, lineHeight: 0.95, color: 'rgba(245,240,228,1)' }}>{item.name}</div>
