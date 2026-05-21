@@ -220,6 +220,24 @@ button { cursor: pointer; }
   to   { opacity: 1; }
 }
 
+/* ── generate button pulse ring ── */
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0px rgba(14,14,14,0.18), 0 8px 32px rgba(0,0,0,0.16); }
+  60%  { box-shadow: 0 0 0 18px rgba(14,14,14,0),   0 8px 32px rgba(0,0,0,0.16); }
+  100% { box-shadow: 0 0 0 0px rgba(14,14,14,0),    0 8px 32px rgba(0,0,0,0.16); }
+}
+.dark .generate-btn {
+  animation: pulse-ring-dark 2.8s ease-out infinite;
+}
+@keyframes pulse-ring-dark {
+  0%   { box-shadow: 0 0 0 0px rgba(242,237,226,0.2), 0 8px 32px rgba(0,0,0,0.4); }
+  60%  { box-shadow: 0 0 0 18px rgba(242,237,226,0),  0 8px 32px rgba(0,0,0,0.4); }
+  100% { box-shadow: 0 0 0 0px rgba(242,237,226,0),   0 8px 32px rgba(0,0,0,0.4); }
+}
+.generate-btn {
+  animation: pulse-ring 2.8s ease-out infinite;
+}
+
 /* ── editor scan-line sweep ── */
 @keyframes scan {
   0%   { top: 0; }

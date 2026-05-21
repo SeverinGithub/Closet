@@ -1,157 +1,331 @@
 // FITS screen — outfit gallery + swipe generator
 import React, { useState } from 'react';
 import { useCloset } from '../store.jsx';
-import { Icon, Chip, OutfitCard } from '../components/ui.jsx';
+import { Icon, Chip, OutfitCard, tonalText } from '../components/ui.jsx';
 
-function SwipeGenerator({ onNav }) {
-  const { outfits, itemsById, likeOutfit } = useCloset();
-  const [vibe, setVibe] = useState('WORK');
-  const [idx, setIdx] = useState(0);
-  const [dir, setDir] = useState(0); // -1 left, +1 right, 0 idle
-  const [saved, setSaved] = useState(0);
+const QUESTIONS = [
+  {
+    key: 'occasion',
+    label: 'What\'s the occasion?',
+    sub: 'Where are you headed today?',
+    options: [
+      { label: 'Work', value: 'WORK',    hint: 'Office, meetings, professional' },
+      { label: 'Casual', value: 'CASUAL', hint: 'Errands, coffee, day out' },
+      { label: 'Evening', value: 'EVENING', hint: 'Dinner, events, nightlife' },
+    ],
+  },
+  {
+    key: 'weather',
+    label: 'How\'s the weather?',
+    sub: 'Pick what fits the forecast.',
+    options: [
+      { label: 'Warm', value: 'warm',  hint: 'Above 20 °C, sun out' },
+      { label: 'Mild', value: 'mild',  hint: 'A light layer works' },
+      { label: 'Cold', value: 'cold',  hint: 'Below 10 °C, bundle up' },
+    ],
+  },
+  {
+    key: 'vibe',
+    label: 'What\'s the vibe?',
+    sub: 'How do you want to feel?',
+    options: [
+      { label: 'Clean',   value: 'clean',   hint: 'Minimal, sharp, precise' },
+      { label: 'Relaxed', value: 'relaxed', hint: 'Easy, effortless, comfortable' },
+      { label: 'Bold',    value: 'bold',    hint: 'Statement pieces, contrast' },
+      { label: 'Classic', value: 'classic', hint: 'Timeless, refined, structured' },
+    ],
+  },
+];
 
-  const pool = outfits.filter((o) => o.mood === vibe);
-  const cur = pool[idx % pool.length];
+function GenerateWizard({ onNav }) {
+  const { outfits, itemsById, wearOutfit, likeOutfit, liked, wearLog, todayIso } = useCloset();
+  const [phase, setPhase] = useState('intro');   // 'intro' | 'questions' | 'result'
+  const [step,  setStep]  = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [result,  setResult]  = useState(null);
 
-  const swipe = (d) => {
-    setDir(d);
-    if (d === 1 && cur) {
-      likeOutfit(cur.id);
-      setSaved((s) => s + 1);
+  const pickAnswer = (value) => {
+    const next = { ...answers, [QUESTIONS[step].key]: value };
+    setAnswers(next);
+    if (step + 1 < QUESTIONS.length) {
+      setStep(step + 1);
+    } else {
+      // pick best outfit
+      let pool = [...outfits];
+      if (next.occasion) {
+        const byOcc = pool.filter((o) => o.mood === next.occasion);
+        if (byOcc.length) pool = byOcc;
+      }
+      setResult(pool[Math.floor(Math.random() * pool.length)] || null);
+      setPhase('result');
     }
-    setTimeout(() => {
-      setIdx((i) => i + 1);
-      setDir(0);
-    }, 280);
   };
 
-  if (!cur) return null;
-  const items = cur.items.map((id) => itemsById[id]).filter(Boolean);
+  const restart = () => { setPhase('intro'); setStep(0); setAnswers({}); setResult(null); };
+  const goBack  = () => {
+    if (step === 0) restart();
+    else setStep(step - 1);
+  };
 
-  return (
-    <div>
-      {/* vibe selector */}
-      <div style={{ padding: '0 20px 20px' }}>
-        <div className="eyebrow" style={{ marginBottom: 8 }}>Tonight's mood</div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {['WORK', 'CASUAL', 'EVENING'].map((v) => (
-            <Chip key={v} active={vibe === v} onClick={() => { setVibe(v); setIdx(0); }} mono>
-              {v}
-            </Chip>
+  /* ── INTRO ── */
+  if (phase === 'intro') {
+    return (
+      <div style={{
+        padding: '32px 20px 48px', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', textAlign: 'center',
+      }}>
+        <div className="eyebrow" style={{ marginBottom: 16, letterSpacing: '0.2em' }}>AI Stylist</div>
+        <div style={{
+          fontFamily: 'var(--serif)', fontStyle: 'italic',
+          fontSize: 38, lineHeight: 1.1, color: 'var(--ink)', marginBottom: 10,
+        }}>
+          Find your<br />perfect look.
+        </div>
+        <div style={{
+          fontFamily: 'var(--serif)', fontStyle: 'italic',
+          fontSize: 14, color: 'var(--ink-soft)', marginBottom: 52,
+        }}>
+          3 quick questions.<br />One perfect outfit.
+        </div>
+
+        {/* big round button */}
+        <button
+          onClick={() => setPhase('questions')}
+          className="press generate-btn"
+          style={{
+            width: 130, height: 130, borderRadius: '50%',
+            background: 'var(--ink)', color: 'var(--bg)',
+            border: 'none',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 8,
+            cursor: 'pointer',
+          }}
+        >
+          <Icon name="sparkle" size={30} sw={1.4} stroke="var(--bg)" />
+          <span style={{
+            fontFamily: 'var(--mono)', fontSize: 9.5,
+            letterSpacing: '0.2em', textTransform: 'uppercase',
+          }}>Generate</span>
+        </button>
+
+        <div style={{
+          marginTop: 40, display: 'flex', flexDirection: 'column', gap: 10, width: '100%',
+        }}>
+          {[
+            { icon: 'check', text: 'Based on your wardrobe' },
+            { icon: 'check', text: 'Matched to your occasion' },
+            { icon: 'check', text: 'Ready to wear today' },
+          ].map(({ icon, text }) => (
+            <div key={text} style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 14,
+              color: 'var(--ink-soft)',
+            }}>
+              <Icon name={icon} size={13} sw={1.6} stroke="var(--ink-mute)" />
+              {text}
+            </div>
           ))}
         </div>
       </div>
+    );
+  }
 
-      {/* card stack */}
-      <div style={{ padding: '0 20px', position: 'relative', height: 480 }}>
-        <div style={{
-          position: 'absolute', inset: '0 36px 24px 36px', borderRadius: 8,
-          background: 'var(--surface)', border: '0.5px solid var(--line)',
-          opacity: 0.5, transform: 'translateY(8px) scale(0.96)',
-        }} />
-        <div style={{
-          position: 'absolute', inset: '0 24px 12px 24px', borderRadius: 8,
-          background: 'var(--surface)', border: '0.5px solid var(--line)',
-          opacity: 0.7, transform: 'translateY(4px) scale(0.98)',
-        }} />
-        <div key={idx} style={{
-          position: 'absolute', inset: '0 14px 0 14px', borderRadius: 8,
-          background: 'var(--surface)', border: '0.5px solid var(--line)',
-          overflow: 'hidden',
-          transform: dir !== 0
-            ? `translateX(${dir * 380}px) rotate(${dir * 14}deg)`
-            : 'translateX(0) rotate(0)',
-          transition: dir !== 0 ? 'transform 0.28s cubic-bezier(.5,0,.3,1), opacity 0.28s' : 'none',
-          opacity: dir !== 0 ? 0 : 1,
-          animation: dir === 0 ? 'fadeIn 0.25s' : 'none',
-        }}>
+  /* ── QUESTIONS ── */
+  if (phase === 'questions') {
+    const q = QUESTIONS[step];
+    const pct = (step / QUESTIONS.length) * 100;
+
+    return (
+      <div style={{ padding: '0 20px' }} className="fade-in">
+        {/* progress bar */}
+        <div style={{ height: 2, background: 'var(--line)', borderRadius: 1, overflow: 'hidden', marginBottom: 28 }}>
           <div style={{
-            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1,
-            background: 'var(--line)',
-          }}>
-            {items.slice(0, 4).map((it) => (
-              <div key={it.id} style={{ position: 'relative', paddingBottom: '100%' }}>
+            height: '100%', background: 'var(--ink)',
+            width: `${pct}%`, transition: 'width 0.4s ease',
+          }} />
+        </div>
+
+        {/* step nav */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+          <button onClick={goBack} className="press" style={{ padding: 8, color: 'var(--ink-soft)' }}>
+            <Icon name="back" size={18} sw={1.4} />
+          </button>
+          <div className="eyebrow">{step + 1} of {QUESTIONS.length}</div>
+          <div style={{ width: 34 }} />
+        </div>
+
+        {/* question */}
+        <div style={{
+          fontFamily: 'var(--serif)', fontStyle: 'italic',
+          fontSize: 34, lineHeight: 1.1, color: 'var(--ink)', marginBottom: 6,
+        }}>{q.label}</div>
+        <div style={{
+          fontFamily: 'var(--serif)', fontStyle: 'italic',
+          fontSize: 14, color: 'var(--ink-soft)', marginBottom: 28,
+        }}>{q.sub}</div>
+
+        {/* options */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {q.options.map((opt) => (
+            <button key={opt.value} onClick={() => pickAnswer(opt.value)} className="press" style={{
+              width: '100%', padding: '18px 20px',
+              background: 'var(--surface)', border: '0.5px solid var(--line)',
+              borderRadius: 10, textAlign: 'left', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <div>
                 <div style={{
-                  position: 'absolute', inset: 0, overflow: 'hidden',
-                  background: it.image ? 'var(--surface)' : it.tone,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  {it.image ? (
-                    <img src={it.image} alt={it.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
-                  ) : (
-                    <div className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
-                      style={{ position: 'absolute', inset: 0 }} />
-                  )}
-                  <div style={{
-                    position: 'absolute', inset: 0, pointerEvents: 'none',
-                    background: 'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 40%, rgba(0,0,0,0.1))',
-                  }} />
-                </div>
+                  fontFamily: 'var(--serif)', fontStyle: 'italic',
+                  fontSize: 22, color: 'var(--ink)', lineHeight: 1,
+                }}>{opt.label}</div>
+                <div style={{
+                  fontFamily: 'var(--sans)', fontSize: 11,
+                  color: 'var(--ink-mute)', marginTop: 4,
+                }}>{opt.hint}</div>
               </div>
-            ))}
-          </div>
-
-          <div style={{ padding: '14px 16px' }}>
-            <div className="eyebrow">{cur.mood} · {cur.occasion?.join(' · ')}</div>
-            <div style={{ fontFamily: 'var(--serif)', fontSize: 26, lineHeight: 1, marginTop: 6 }}>
-              <em>{cur.name}</em>
-            </div>
-            <div style={{ marginTop: 10, fontSize: 11, color: 'var(--ink-soft)' }}>
-              {items.map((it) => it.name).join(' · ')}
-            </div>
-          </div>
-
-          {dir === 1 && (
-            <div style={{
-              position: 'absolute', top: 30, right: 24, padding: '6px 14px',
-              border: '2px solid var(--accent)', color: 'var(--accent)',
-              fontFamily: 'var(--mono)', letterSpacing: '0.16em', fontSize: 14,
-              transform: 'rotate(12deg)', fontWeight: 600,
-            }}>SAVE</div>
-          )}
-          {dir === -1 && (
-            <div style={{
-              position: 'absolute', top: 30, left: 24, padding: '6px 14px',
-              border: '2px solid var(--ink-soft)', color: 'var(--ink-soft)',
-              fontFamily: 'var(--mono)', letterSpacing: '0.16em', fontSize: 14,
-              transform: 'rotate(-12deg)', fontWeight: 600,
-            }}>PASS</div>
-          )}
+              <Icon name="chevron" size={16} sw={1.4} stroke="var(--ink-mute)" />
+            </button>
+          ))}
         </div>
       </div>
+    );
+  }
 
-      {/* action buttons */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginTop: 24 }}>
-        <button onClick={() => swipe(-1)} className="press" style={{
-          width: 54, height: 54, borderRadius: '50%',
-          background: 'var(--surface)', border: '0.5px solid var(--line)',
-          color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Icon name="close" size={20} sw={1.4} />
-        </button>
-        <button onClick={() => onNav('outfit', cur.id)} className="press" style={{
-          width: 46, height: 46, borderRadius: '50%', marginTop: 4,
-          background: 'transparent', border: '0.5px solid var(--line)',
-          color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Icon name="search" size={16} sw={1.4} />
-        </button>
-        <button onClick={() => swipe(1)} className="press" style={{
-          width: 54, height: 54, borderRadius: '50%',
-          background: 'var(--accent)', color: '#fff',
-          border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Icon name="heart" size={20} sw={1.6} stroke="#fff" />
-        </button>
+  /* ── RESULT ── */
+  if (!result) {
+    return (
+      <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+        <div style={{
+          fontFamily: 'var(--serif)', fontStyle: 'italic',
+          fontSize: 22, color: 'var(--ink-soft)', marginBottom: 24,
+        }}>No matching outfits found.</div>
+        <button onClick={restart} className="press" style={{
+          padding: '14px 28px', background: 'var(--ink)', color: 'var(--bg)',
+          borderRadius: 100, fontFamily: 'var(--mono)', fontSize: 10,
+          letterSpacing: '0.16em', textTransform: 'uppercase',
+        }}>Try again</button>
       </div>
+    );
+  }
 
+  const items     = result.items.map((id) => itemsById[id]).filter(Boolean);
+  const wornToday = wearLog[todayIso] === result.id;
+  const isLiked   = liked.includes(result.id);
+
+  return (
+    <div style={{ padding: '0 20px 24px' }} className="fade-in">
+      {/* progress complete */}
+      <div style={{ height: 2, background: 'var(--ink)', borderRadius: 1, marginBottom: 28 }} />
+
+      <div className="eyebrow" style={{ marginBottom: 6 }}>Your perfect look</div>
       <div style={{
-        textAlign: 'center', marginTop: 16, fontSize: 10,
-        color: 'var(--ink-mute)', fontFamily: 'var(--mono)', letterSpacing: '0.14em', textTransform: 'uppercase',
+        fontFamily: 'var(--serif)', fontStyle: 'italic',
+        fontSize: 36, lineHeight: 1.1, color: 'var(--ink)', marginBottom: 4,
+      }}>{result.name}</div>
+      <div style={{
+        fontFamily: 'var(--serif)', fontStyle: 'italic',
+        fontSize: 13, color: 'var(--ink-soft)', marginBottom: 20,
       }}>
-        {saved} saved this session
+        {result.mood} · {(result.occasion || []).join(', ')} · {result.items.length} pieces
       </div>
+
+      {/* outfit grid */}
+      <div style={{
+        border: '0.5px solid var(--line)', borderRadius: 8, overflow: 'hidden',
+        background: 'var(--line)', display: 'grid', gap: 1,
+        gridTemplateColumns: '1fr 1fr', marginBottom: 16,
+      }}>
+        {items.map((it) => (
+          <div key={it.id} style={{ position: 'relative', paddingBottom: '100%' }}>
+            <div style={{
+              position: 'absolute', inset: 0, overflow: 'hidden',
+              background: it.image ? 'var(--surface)' : it.tone,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {it.image ? (
+                <img src={it.image} alt={it.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+              ) : (
+                <div className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
+                  style={{ position: 'absolute', inset: 0 }} />
+              )}
+              <div style={{
+                position: 'absolute', inset: 0, pointerEvents: 'none',
+                background: 'linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.38))',
+              }} />
+              <div style={{
+                position: 'absolute', bottom: 8, left: 10,
+                fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 12,
+                color: it.image ? 'rgba(245,240,228,1)' : tonalText(it.tone, 1),
+              }}>{it.name}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* items list */}
+      <div style={{ marginBottom: 20 }}>
+        {items.map((it) => (
+          <div key={it.id} style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '8px 0', borderBottom: '0.5px solid var(--line)',
+          }}>
+            <div style={{
+              width: 36, height: 44, borderRadius: 3, flexShrink: 0, overflow: 'hidden',
+              background: it.image ? 'var(--surface)' : it.tone,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {it.image
+                ? <img src={it.image} alt={it.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                : <div className={it.pat !== 'solid' ? `pat-${it.pat}` : ''} style={{ width: '100%', height: '100%' }} />}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div className="eyebrow" style={{ fontSize: 8.5 }}>{it.cat}</div>
+              <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 15 }}>{it.name}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* actions */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+        <button onClick={() => wearOutfit(result.id)} className="press" style={{
+          flex: 1, padding: 14,
+          background: wornToday ? 'transparent' : 'var(--ink)',
+          color: wornToday ? 'var(--ink)' : 'var(--bg)',
+          border: wornToday ? '0.5px solid var(--ink)' : 'none',
+          borderRadius: 100, fontFamily: 'var(--mono)', fontSize: 10,
+          letterSpacing: '0.14em', textTransform: 'uppercase',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+        }}>
+          <Icon name="check" size={12} sw={1.6} /> {wornToday ? 'Worn today' : 'Wear today'}
+        </button>
+        <button onClick={() => likeOutfit(result.id)} className="press" style={{
+          padding: '14px 18px', background: 'transparent',
+          border: `0.5px solid ${isLiked ? 'var(--accent)' : 'var(--line)'}`,
+          borderRadius: 100,
+        }}>
+          <Icon name="heart" size={15} sw={1.4}
+            fill={isLiked ? 'var(--accent)' : 'none'}
+            stroke={isLiked ? 'var(--accent)' : 'currentColor'} />
+        </button>
+        <button onClick={() => onNav('outfit', result.id)} className="press" style={{
+          padding: '14px 18px', background: 'transparent',
+          border: '0.5px solid var(--line)', borderRadius: 100, color: 'var(--ink)',
+        }}>
+          <Icon name="search" size={15} sw={1.4} />
+        </button>
+      </div>
+
+      <button onClick={restart} className="press" style={{
+        width: '100%', padding: 13, background: 'transparent',
+        border: '0.5px solid var(--line)', borderRadius: 100,
+        fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em',
+        textTransform: 'uppercase', color: 'var(--ink-soft)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+      }}>
+        <Icon name="close" size={10} sw={1.6} /> Start over
+      </button>
     </div>
   );
 }
@@ -278,7 +452,7 @@ export default function FitsScreen({ mode, onNav }) {
             </div>
           </div>
         ) : (
-          <SwipeGenerator onNav={onNav} />
+          <GenerateWizard onNav={onNav} />
         )
       )}
     </div>
