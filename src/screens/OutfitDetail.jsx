@@ -47,16 +47,27 @@ export default function OutfitDetail({ outfitId, onBack, onNav }) {
         }}>
           {items.map((it) => (
             <div key={it.id} style={{ position: 'relative', paddingBottom: '100%' }}>
-              <div className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
-                style={{ position: 'absolute', inset: 0, background: it.tone, overflow: 'hidden' }}>
+              <div style={{
+                position: 'absolute', inset: 0, overflow: 'hidden',
+                background: it.image ? 'var(--surface)' : it.tone,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {it.image ? (
+                  <img src={it.image} alt={it.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                ) : (
+                  <div className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
+                    style={{ position: 'absolute', inset: 0 }} />
+                )}
                 <div style={{
                   position: 'absolute', inset: 0,
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 50%, rgba(0,0,0,0.1))',
+                  background: 'linear-gradient(180deg, transparent, transparent 60%, rgba(0,0,0,0.32))',
+                  pointerEvents: 'none',
                 }} />
                 <div style={{
                   position: 'absolute', bottom: 8, left: 10,
                   fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 13,
-                  color: tonalText(it.tone, 1),
+                  color: it.image ? 'rgba(245,240,228,1)' : tonalText(it.tone, 1),
                 }}>{it.name}</div>
               </div>
             </div>
@@ -72,8 +83,15 @@ export default function OutfitDetail({ outfitId, onBack, onNav }) {
             width: '100%', padding: '10px 0', display: 'flex', alignItems: 'center', gap: 12,
             borderBottom: '0.5px solid var(--line)', textAlign: 'left',
           }}>
-            <div className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
-              style={{ width: 44, height: 56, background: it.tone, borderRadius: 3, flexShrink: 0 }} />
+            <div style={{
+              width: 44, height: 56, borderRadius: 3, flexShrink: 0, overflow: 'hidden',
+              background: it.image ? 'var(--surface)' : it.tone,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {it.image
+                ? <img src={it.image} alt={it.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                : <div className={it.pat !== 'solid' ? `pat-${it.pat}` : ''} style={{ width: '100%', height: '100%' }} />}
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="eyebrow" style={{ fontSize: 8.5 }}>{it.cat}</div>
               <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 17, lineHeight: 1.1 }}>{it.name}</div>

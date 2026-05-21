@@ -261,11 +261,22 @@ export const OutfitCard = ({ outfit, onClick, large = false }) => {
           gap: 1, background: 'var(--line)',
         }}>
           {cells.map((it, i) => (
-            <div key={i} className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
-              style={{ background: it.tone, position: 'relative', overflow: 'hidden' }}>
+            <div key={i} style={{
+              background: it.image ? 'var(--surface)' : it.tone,
+              position: 'relative', overflow: 'hidden',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {it.image ? (
+                <img src={it.image} alt={it.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+              ) : (
+                <div className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
+                  style={{ position: 'absolute', inset: 0 }} />
+              )}
               <div style={{
                 position: 'absolute', inset: 0,
-                background: 'linear-gradient(180deg, rgba(255,255,255,0.06), transparent 40%, rgba(0,0,0,0.08))',
+                background: 'linear-gradient(180deg, rgba(255,255,255,0.04), transparent 40%, rgba(0,0,0,0.06))',
+                pointerEvents: 'none',
               }} />
             </div>
           ))}
