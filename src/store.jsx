@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
-  ITEMS, OUTFITS, CATEGORIES, WEAR_LOG, TODAY_ISO, AR_BY_CAT, formatLast,
+  CATEGORIES, TODAY_ISO, AR_BY_CAT, formatLast,
 } from './data.js';
 
-// Bump version to reset stale alpha state
-const STORAGE_KEY = 'closet:v2';
+// v3 — fresh start: no seed data, all users begin with empty wardrobe
+const STORAGE_KEY = 'closet:v3';
 
 const TWEAK_DEFAULTS = {
   dark: false,
@@ -14,11 +14,11 @@ const TWEAK_DEFAULTS = {
 
 function defaultState() {
   return {
-    items: ITEMS,
-    outfits: OUTFITS,
-    wearLog: WEAR_LOG,
-    liked: [],
-    tweaks: TWEAK_DEFAULTS,
+    items:   [],
+    outfits: [],
+    wearLog: {},
+    liked:   [],
+    tweaks:  TWEAK_DEFAULTS,
   };
 }
 
@@ -28,9 +28,9 @@ function loadState() {
     if (!raw) return defaultState();
     const parsed = JSON.parse(raw);
     return {
-      items:   Array.isArray(parsed.items)   ? parsed.items   : ITEMS,
-      outfits: Array.isArray(parsed.outfits) ? parsed.outfits : OUTFITS,
-      wearLog: parsed.wearLog && typeof parsed.wearLog === 'object' ? parsed.wearLog : WEAR_LOG,
+      items:   Array.isArray(parsed.items)   ? parsed.items   : [],
+      outfits: Array.isArray(parsed.outfits) ? parsed.outfits : [],
+      wearLog: parsed.wearLog && typeof parsed.wearLog === 'object' ? parsed.wearLog : {},
       liked:   Array.isArray(parsed.liked)   ? parsed.liked   : [],
       tweaks:  { ...TWEAK_DEFAULTS, ...(parsed.tweaks || {}) },
     };

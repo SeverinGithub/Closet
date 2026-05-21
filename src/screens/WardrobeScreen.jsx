@@ -72,17 +72,32 @@ export default function WardrobeScreen({ mode, onBack, onNav }) {
       </div>
 
       <div style={{ padding: '0 20px' }}>
-        {filtered.length > 0 ? (
+        {items.length === 0 ? (
+          /* True empty state */
+          <div style={{ padding: '48px 0', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 26, lineHeight: 1.2, color: 'var(--ink)', marginBottom: 10 }}>
+              Your wardrobe is empty.
+            </div>
+            <div style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--ink-soft)', marginBottom: 28 }}>
+              Start by adding your first piece — snap a photo or pick a color.
+            </div>
+            <button onClick={() => onNav('editor')} className="press" style={{
+              padding: '14px 28px', background: 'var(--ink)', color: 'var(--bg)',
+              borderRadius: 100, fontFamily: 'var(--mono)', fontSize: 10,
+              letterSpacing: '0.16em', textTransform: 'uppercase',
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+            }}>
+              <Icon name="plus" size={12} sw={1.8} /> Add first piece
+            </button>
+          </div>
+        ) : filtered.length > 0 ? (
           <div className="masonry-2">
             {filtered.map((it) => (
               <ItemTile key={it.id} item={it} mode={mode} onClick={() => onNav('item', it.id)} />
             ))}
           </div>
         ) : (
-          <div style={{
-            padding: '40px 20px', textAlign: 'center',
-            fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 15, color: 'var(--ink-soft)',
-          }}>
+          <div style={{ padding: '40px 20px', textAlign: 'center', fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 15, color: 'var(--ink-soft)' }}>
             Nothing matches that search.
           </div>
         )}

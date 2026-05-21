@@ -16,14 +16,38 @@ const BigStat = ({ label, value, big }) => (
 export default function StatsScreen({ mode, onBack, onNav }) {
   const { items, outfits, categories } = useCloset();
 
-  const mostWorn = [...items].sort((a, b) => b.worn - a.worn).slice(0, 5);
-  const unworn = [...items].sort((a, b) => a.worn - b.worn).slice(0, 4);
+  const mostWorn  = [...items].sort((a, b) => b.worn - a.worn).slice(0, 5);
+  const unworn    = [...items].filter((i) => i.worn === 0).slice(0, 4);
   const catTotals = categories.map((c) => ({
     c,
     count: items.filter((i) => i.cat === c).length,
-    worn: items.filter((i) => i.cat === c).reduce((s, i) => s + i.worn, 0),
+    worn:  items.filter((i) => i.cat === c).reduce((s, i) => s + i.worn, 0),
   }));
   const maxWorn = Math.max(1, ...catTotals.map((c) => c.worn));
+
+  // Empty state
+  if (items.length === 0) {
+    return (
+      <div className="fade-in" style={{ paddingBottom: 110 }}>
+        <div style={{ padding: '4px 16px', display: 'flex' }}>
+          <button onClick={onBack} className="press" style={{ padding: 8 }}>
+            <Icon name="back" size={20} sw={1.4} />
+          </button>
+        </div>
+        <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <div className="h-display" style={{ fontSize: 40, color: 'var(--ink)', marginBottom: 12 }}>
+            No data <em style={{ color: 'var(--accent)' }}>yet.</em>
+          </div>
+          <div style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--ink-soft)' }}>
+            Add pieces to your wardrobe and start wearing outfits — your stats will appear here.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const now = new Date();
+  const quarterLabel = `Q${Math.ceil((now.getMonth() + 1) / 3)} · ${now.getFullYear()}`;
 
   return (
     <div className="fade-in" style={{ paddingBottom: 110 }}>
@@ -37,7 +61,7 @@ export default function StatsScreen({ mode, onBack, onNav }) {
 
       {/* hero */}
       <div style={{ padding: '12px 20px 24px' }}>
-        <div className="eyebrow">Q1 · 2026</div>
+        <div className="eyebrow">{quarterLabel}</div>
         <div className="h-display" style={{ fontSize: 44, color: 'var(--ink)', marginTop: 6 }}>
           A <em style={{ color: 'var(--accent)' }}>wardrobe</em>, read.
         </div>
@@ -93,7 +117,7 @@ export default function StatsScreen({ mode, onBack, onNav }) {
               </div>
               <div>
                 <div style={{ fontFamily: 'var(--serif)', fontSize: 22, lineHeight: 1, textAlign: 'right' }}>{it.worn}<span style={{ fontSize: 12, color: 'var(--ink-mute)' }}>×</span></div>
-                <div style={{ fontSize: 9, color: 'var(--ink-mute)', fontFamily: 'var(--mono)', textAlign: 'right', letterSpacing: '0.1em', textTransform: 'uppercase' }}>since Jan</div>
+                <div style={{ fontSize: 9, color: 'var(--ink-mute)', fontFamily: 'var(--mono)', textAlign: 'right', letterSpacing: '0.1em', textTransform: 'uppercase' }}>total</div>
               </div>
             </button>
           ))}

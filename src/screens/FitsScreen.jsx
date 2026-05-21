@@ -210,40 +210,64 @@ export default function FitsScreen({ mode, onNav }) {
       </div>
 
       {view === 'grid' ? (
-        <>
-          {/* filter chips */}
-          <div className="no-scrollbar" style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 20px 16px' }}>
-            {moods.map((m) => (
-              <Chip key={m} active={filter === m} onClick={() => setFilter(m)} mono>{m}</Chip>
-            ))}
-            <div style={{ width: 1, background: 'var(--line)', margin: '4px 4px' }} />
-            {occasions.map((o) => (
-              <Chip key={o} active={occasion === o} onClick={() => setOccasion(occasion === o ? null : o)}>{o}</Chip>
-            ))}
+        outfits.length === 0 ? (
+          /* ── True empty state ── */
+          <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 28, lineHeight: 1.2, color: 'var(--ink)', marginBottom: 10 }}>
+              No outfits yet.
+            </div>
+            <div style={{ fontFamily: 'var(--sans)', fontSize: 13, color: 'var(--ink-soft)', marginBottom: 28 }}>
+              Add pieces to your wardrobe first, then create your first outfit combination.
+            </div>
+            <button onClick={() => onNav('outfitEditor')} className="press" style={{
+              padding: '14px 28px', background: 'var(--ink)', color: 'var(--bg)',
+              borderRadius: 100, fontFamily: 'var(--mono)', fontSize: 10,
+              letterSpacing: '0.16em', textTransform: 'uppercase',
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+            }}>
+              <Icon name="plus" size={12} sw={1.8} /> Create first outfit
+            </button>
           </div>
+        ) : (
+          <>
+            {/* filter chips */}
+            <div className="no-scrollbar" style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 20px 16px' }}>
+              {moods.map((m) => (
+                <Chip key={m} active={filter === m} onClick={() => setFilter(m)} mono>{m}</Chip>
+              ))}
+              <div style={{ width: 1, background: 'var(--line)', margin: '4px 4px' }} />
+              {occasions.map((o) => (
+                <Chip key={o} active={occasion === o} onClick={() => setOccasion(occasion === o ? null : o)}>{o}</Chip>
+              ))}
+            </div>
 
-          {/* masonry grid */}
-          <div style={{ padding: '0 20px' }}>
-            {filtered.length > 0 ? (
-              <div className="masonry-2">
-                {filtered.map((o, i) => (
-                  <OutfitCard key={o.id} outfit={o} large={i % 5 === 0}
-                    onClick={() => onNav('outfit', o.id)} />
-                ))}
-              </div>
-            ) : (
-              <div style={{
-                padding: '40px 20px', textAlign: 'center',
-                fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 15,
-                color: 'var(--ink-soft)',
-              }}>
-                No fits match that filter.
-              </div>
-            )}
-          </div>
-        </>
+            {/* masonry grid */}
+            <div style={{ padding: '0 20px' }}>
+              {filtered.length > 0 ? (
+                <div className="masonry-2">
+                  {filtered.map((o, i) => (
+                    <OutfitCard key={o.id} outfit={o} large={i % 5 === 0}
+                      onClick={() => onNav('outfit', o.id)} />
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: '40px 20px', textAlign: 'center', fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 15, color: 'var(--ink-soft)' }}>
+                  No outfits match that filter.
+                </div>
+              )}
+            </div>
+          </>
+        )
       ) : (
-        <SwipeGenerator onNav={onNav} />
+        outfits.length === 0 ? (
+          <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 22, color: 'var(--ink-soft)' }}>
+              Add some pieces first to generate outfit ideas.
+            </div>
+          </div>
+        ) : (
+          <SwipeGenerator onNav={onNav} />
+        )
       )}
     </div>
   );
