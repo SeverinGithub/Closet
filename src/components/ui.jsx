@@ -64,21 +64,46 @@ export const ItemTile = ({ item, height, mode = 'photo', showLabel = true, onCli
   const h = height || Math.round(160 * ar);
   const patClass = item.pat && item.pat !== 'solid' ? `pat-${item.pat}` : '';
 
-  // Real photo — full garment visible, no cropping
+  // Real photo — natural aspect ratio (no fixed-height box behind it)
   if (item.image) {
+    // Explicit height → fixed container (e.g. "Combine with" row in ItemDetail)
+    if (height) {
+      return (
+        <div onClick={onClick} className="press" style={{
+          height: h, borderRadius: 4, overflow: 'hidden',
+          background: 'var(--surface)',
+          cursor: onClick ? 'pointer' : 'default', position: 'relative',
+          border: frame ? '0.5px solid rgba(0,0,0,0.06)' : 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <img src={item.image} alt={item.name}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+          {showLabel && (
+            <>
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: 'linear-gradient(180deg, transparent, transparent 55%, rgba(0,0,0,0.45))',
+                pointerEvents: 'none',
+              }} />
+              <div style={{
+                position: 'absolute', bottom: 8, left: 10, right: 10,
+                fontFamily: 'var(--serif)', fontSize: 13, lineHeight: 1, fontStyle: 'italic',
+                color: 'rgba(245,240,228,1)',
+              }}>{item.name}</div>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    // No explicit height → image defines its own proportions, no white gap visible
     return (
       <div onClick={onClick} className="press" style={{
-        height: h, borderRadius: 4, overflow: 'hidden',
-        background: 'var(--surface)',
-        cursor: onClick ? 'pointer' : 'default', position: 'relative',
-        border: frame ? '0.5px solid rgba(0,0,0,0.06)' : 'none',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: onClick ? 'pointer' : 'default',
+        position: 'relative', borderRadius: 4, overflow: 'hidden',
       }}>
-        <img
-          src={item.image}
-          alt={item.name}
-          style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-        />
+        <img src={item.image} alt={item.name}
+          style={{ width: '100%', height: 'auto', display: 'block' }} />
         {showLabel && (
           <>
             <div style={{
