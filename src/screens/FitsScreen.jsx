@@ -70,58 +70,60 @@ function GenerateWizard({ onNav }) {
   /* ── INTRO ── */
   if (phase === 'intro') {
     return (
-      <div style={{
-        padding: '32px 20px 48px', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', textAlign: 'center',
-      }}>
-        <div className="eyebrow" style={{ marginBottom: 16, letterSpacing: '0.2em' }}>AI Stylist</div>
+      <div style={{ padding: '24px 20px 40px' }}>
+        {/* heading — left-aligned like rest of app */}
+        <div className="eyebrow" style={{ marginBottom: 10 }}>AI Stylist</div>
         <div style={{
           fontFamily: 'var(--serif)', fontStyle: 'italic',
-          fontSize: 38, lineHeight: 1.1, color: 'var(--ink)', marginBottom: 10,
+          fontSize: 44, lineHeight: 1.05, color: 'var(--ink)', marginBottom: 8,
         }}>
           Find your<br />perfect look.
         </div>
         <div style={{
           fontFamily: 'var(--serif)', fontStyle: 'italic',
-          fontSize: 14, color: 'var(--ink-soft)', marginBottom: 52,
+          fontSize: 14, color: 'var(--ink-soft)', marginBottom: 44,
         }}>
-          3 quick questions.<br />One perfect outfit.
+          3 quick questions. One perfect outfit.
         </div>
 
-        {/* big round button */}
-        <button
-          onClick={() => setPhase('questions')}
-          className="press generate-btn"
-          style={{
-            width: 130, height: 130, borderRadius: '50%',
-            background: 'var(--ink)', color: 'var(--bg)',
-            border: 'none',
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: 8,
-            cursor: 'pointer',
-          }}
-        >
-          <Icon name="sparkle" size={30} sw={1.4} stroke="var(--bg)" />
-          <span style={{
-            fontFamily: 'var(--mono)', fontSize: 9.5,
-            letterSpacing: '0.2em', textTransform: 'uppercase',
-          }}>Generate</span>
-        </button>
+        {/* big round button — centered via its own row */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 44 }}>
+          <button
+            onClick={() => setPhase('questions')}
+            className="press generate-btn"
+            style={{
+              width: 140, height: 140, borderRadius: '50%',
+              background: 'var(--ink)', color: 'var(--bg)',
+              border: 'none',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 8,
+              cursor: 'pointer',
+            }}
+          >
+            <Icon name="sparkle" size={32} sw={1.4} stroke="var(--bg)" />
+            <span style={{
+              fontFamily: 'var(--mono)', fontSize: 9.5,
+              letterSpacing: '0.2em', textTransform: 'uppercase',
+            }}>Generate</span>
+          </button>
+        </div>
 
-        <div style={{
-          marginTop: 40, display: 'flex', flexDirection: 'column', gap: 10, width: '100%',
-        }}>
+        {/* bullets — full width, left-aligned */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
-            { icon: 'check', text: 'Based on your wardrobe' },
-            { icon: 'check', text: 'Matched to your occasion' },
-            { icon: 'check', text: 'Ready to wear today' },
-          ].map(({ icon, text }) => (
+            'Based on your wardrobe',
+            'Matched to your occasion',
+            'Ready to wear today',
+          ].map((text) => (
             <div key={text} style={{
-              display: 'flex', alignItems: 'center', gap: 10,
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '14px 16px',
+              background: 'var(--surface)', border: '0.5px solid var(--line)',
+              borderRadius: 8,
               fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 14,
               color: 'var(--ink-soft)',
             }}>
-              <Icon name={icon} size={13} sw={1.6} stroke="var(--ink-mute)" />
+              <Icon name="check" size={13} sw={1.6} stroke="var(--ink-mute)" />
               {text}
             </div>
           ))}
