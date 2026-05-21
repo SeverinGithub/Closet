@@ -65,14 +65,18 @@ function Step0Capture({ onNext }) {
   };
 
   return (
-    <div>
+    <div style={{
+      minHeight: 'calc(100dvh - 160px)',
+      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+      padding: '0 20px 24px',
+    }}>
       {/* hidden file inputs */}
       <input ref={cameraRef}  type="file" accept="image/*" capture="environment"
         style={{ display: 'none' }} onChange={(e) => handleFile(e.target.files[0])} />
       <input ref={libraryRef} type="file" accept="image/*"
         style={{ display: 'none' }} onChange={(e) => handleFile(e.target.files[0])} />
 
-      <div style={{ padding: '0 20px 16px' }}>
+      <div>
         <button onClick={() => cameraRef.current?.click()} disabled={loading} className="press" style={{
           width: '100%', padding: '22px 24px', background: 'var(--ink)', color: 'var(--bg)',
           borderRadius: 6, display: 'flex', alignItems: 'center', gap: 16, textAlign: 'left',
@@ -107,6 +111,17 @@ function Step0Capture({ onNext }) {
             <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 17, lineHeight: 1.15, marginTop: 10 }}>Manual</div>
             <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', marginTop: 4 }}>Set color & details</div>
           </button>
+        </div>
+      </div>
+
+      {/* bottom hint */}
+      <div style={{
+        marginTop: 32, padding: '20px', background: 'var(--surface)',
+        border: '0.5px solid var(--line)', borderRadius: 6,
+      }}>
+        <div className="eyebrow" style={{ marginBottom: 8 }}>Tip</div>
+        <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 15, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
+          Best results with a plain background — hang the piece on a wall or door.
         </div>
       </div>
     </div>
