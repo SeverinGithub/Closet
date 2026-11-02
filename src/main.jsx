@@ -1,13 +1,13 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { ClosetProvider } from './store.jsx';
-import App from './App.jsx';
+import { AuthProvider } from './contexts/AuthContext.jsx';
+import AppRoot from './AppRoot.jsx';
 import './index.css';
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ClosetProvider>
-      <App />
-    </ClosetProvider>
+    <AuthProvider>
+      <AppRoot />
+    </AuthProvider>
   </React.StrictMode>,
 );

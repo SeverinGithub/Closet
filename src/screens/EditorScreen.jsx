@@ -244,9 +244,14 @@ function Step2Tag({ draft, setDraft, onDone, onBack }) {
     tags: d.tags.includes(tag) ? d.tags.filter((t) => t !== tag) : [...d.tags, tag],
   }));
 
+  const [tagInput, setTagInput] = useState('');
+  const [tagInputOpen, setTagInputOpen] = useState(false);
+
   const addCustomTag = () => {
-    const t = (window.prompt('New tag') || '').trim().toLowerCase();
+    const t = tagInput.trim().toLowerCase();
     if (t && !draft.tags.includes(t)) setField('tags', [...draft.tags, t]);
+    setTagInput('');
+    setTagInputOpen(false);
   };
 
   const presetTags = ['casual', 'vintage', 'everyday', 'workwear', 'evening', 'classic'];
@@ -332,7 +337,19 @@ function Step2Tag({ draft, setDraft, onDone, onBack }) {
           {allTags.map((t) => (
             <Chip key={t} active={draft.tags.includes(t)} onClick={() => toggleTag(t)}># {t}</Chip>
           ))}
-          <Chip onClick={addCustomTag}><Icon name="plus" size={11} sw={1.6} /> add</Chip>
+          {tagInputOpen ? (
+            <input
+              autoFocus
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') addCustomTag(); if (e.key === 'Escape') { setTagInputOpen(false); setTagInput(''); } }}
+              onBlur={addCustomTag}
+              placeholder="new tag…"
+              style={{ fontSize: 12, fontFamily: 'var(--mono)', border: 'none', borderBottom: '1px solid var(--ink)', background: 'transparent', outline: 'none', width: 90, color: 'var(--ink)' }}
+            />
+          ) : (
+            <Chip onClick={() => setTagInputOpen(true)}><Icon name="plus" size={11} sw={1.6} /> add</Chip>
+          )}
         </div>
       </FieldBlock>
 

@@ -3,6 +3,8 @@ import React from 'react';
 import { useCloset } from '../store.jsx';
 import { Icon, ItemTile, SectionHead, OutfitCard } from '../components/ui.jsx';
 import { TODAY_ISO } from '../data.js';
+import MorningBanner from '../components/MorningBanner.jsx';
+import { useMorningReminder } from '../hooks/useMorningReminder.js';
 
 // Real date helpers
 const DAY_NAMES   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -76,9 +78,14 @@ const CalendarStrip = ({ onClick }) => {
   );
 };
 
-export default function HomeScreen({ mode, onNav }) {
-  const { items, itemsById, outfits, wearLog, wearOutfit } = useCloset();
+export default function HomeScreen({ mode, onNav, onSettings }) {
+  const { items, itemsById, outfits, wearLog, wearOutfit, tweaks } = useCloset();
   const today = getTodayDisplay();
+
+  const todayLoggedId = wearLog[TODAY_ISO];
+  const todayLogged   = !!todayLoggedId;
+
+  useMorningReminder({ enabled: tweaks.reminderEnabled, todayLogged });
 
   const todayOutfit  = outfits[0] || null;
   const todayItems   = todayOutfit ? todayOutfit.items.map((id) => itemsById[id]).filter(Boolean) : [];
@@ -101,9 +108,15 @@ export default function HomeScreen({ mode, onNav }) {
           paddingBottom: 14, borderBottom: '0.5px solid var(--line)',
         }}>
           <span>{today.day} · {today.month.slice(0,3)} {String(today.date).padStart(2,'0')}</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <button onClick={onSettings} className="press" style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '2px 0', background: 'transparent',
+            fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.18em',
+            color: 'var(--ink-soft)', textTransform: 'uppercase',
+          }}>
             <Icon name="heart" size={10} sw={1.4} /> My Closet
-          </span>
+            <Icon name="settings" size={12} sw={1.4} />
+          </button>
         </div>
         <div style={{
           fontFamily: 'var(--serif)', fontSize: 44, lineHeight: 0.9,
@@ -121,6 +134,12 @@ export default function HomeScreen({ mode, onNav }) {
           <span>{items.length} pieces</span>
         </div>
       </div>
+
+      {/* ── Morning Banner ── */}
+      <MorningBanner
+        todayLogged={todayLogged}
+        onLogOutfit={() => onNav('fits')}
+      />
 
       {/* ── Today's Edit (hero) ── */}
       {todayOutfit ? (

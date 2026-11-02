@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useCloset } from './store.jsx';
+import { useAuth } from './contexts/AuthContext.jsx';
+import { requestNotificationPermission } from './hooks/useMorningReminder.js';
 import TweaksPanel, { TweakSection, TweakRadio, TweakToggle, TweakButton } from './components/TweaksPanel.jsx';
 import { TabBar } from './components/ui.jsx';
 import HomeScreen from './screens/HomeScreen.jsx';
@@ -14,9 +16,11 @@ import AIScreen from './screens/AIScreen.jsx';
 import OnboardingScreen from './screens/OnboardingScreen.jsx';
 import OutfitEditorScreen from './screens/OutfitEditorScreen.jsx';
 import ItemEditorScreen from './screens/ItemEditorScreen.jsx';
+import SettingsScreen from './screens/SettingsScreen.jsx';
 
-export default function App() {
-  const { tweaks, setTweak } = useCloset();
+export default function App({ userEmail }) {
+  const { tweaks, setTweak, loading: dataLoading } = useCloset();
+  const { logout } = useAuth();
 
   const [tab, setTab] = useState('home');
   const [route, setRoute] = useState({ name: 'tab' });
@@ -62,13 +66,28 @@ export default function App() {
     if (route.name === 'ai')           screen = <AIScreen {...props} />;
     if (route.name === 'outfitEditor') screen = <OutfitEditorScreen {...props} />;
     if (route.name === 'itemEditor')   screen = <ItemEditorScreen itemId={route.id} onBack={onBack} />;
+    if (route.name === 'settings')     screen = <SettingsScreen onBack={onBack} userEmail={userEmail} />;
   } else {
-    if (tab === 'home')   screen = <HomeScreen mode={tweaks.itemMode} onNav={nav} />;
+    if (tab === 'home')   screen = <HomeScreen mode={tweaks.itemMode} onNav={nav} onSettings={() => nav('settings')} />;
     if (tab === 'fits')   screen = <FitsScreen mode={tweaks.itemMode} onNav={nav} />;
     if (tab === 'editor') screen = <EditorScreen mode={tweaks.itemMode} onNav={nav} />;
   }
 
   const showTabs = !showOnboarding;
+
+  if (dataLoading) {
+    return (
+      <div className={tweaks.dark ? 'app-root dark' : 'app-root'} style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        minHeight: '100dvh', background: 'var(--bg)',
+      }}>
+        <div style={{
+          fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.22em',
+          textTransform: 'uppercase', color: 'var(--ink-mute)',
+        }}>Loading wardrobe…</div>
+      </div>
+    );
+  }
 
   return (
     <div className={tweaks.dark ? 'app-root dark' : 'app-root'}>
@@ -103,6 +122,34 @@ export default function App() {
             options={[{ value: 'photo', label: 'Photo' }, { value: 'cutout', label: 'Cutout' }]}
           />
         </TweakSection>
+        <TweakSection label="Reminder">
+          <TweakToggle
+            label="Morning reminder"
+            value={tweaks.reminderEnabled || false}
+            onChange={async (v) => {
+              if (v) {
+                const perm = await requestNotificationPermission();
+                if (perm === 'denied') {
+                  alert('Notifications blocked. Please enable them in your browser settings.');
+                  return;
+                }
+                if (perm === 'unsupported') {
+                  alert('Your browser does not support notifications.');
+                  return;
+                }
+              }
+              setTweak('reminderEnabled', v);
+            }}
+          />
+          <div style={{
+            fontSize: 11, color: 'var(--ink-mute)', fontFamily: 'var(--serif)',
+            fontStyle: 'italic', lineHeight: 1.4, paddingBottom: 4,
+          }}>
+            {tweaks.reminderEnabled
+              ? 'You\'ll get a notification between 6–12am when no outfit is logged.'
+              : 'Enable to get a browser notification on mornings without a logged outfit.'}
+          </div>
+        </TweakSection>
         <TweakSection label="Flow">
           <TweakToggle
             label="Show onboarding"
@@ -113,6 +160,16 @@ export default function App() {
           <TweakButton label="Open Calendar" onClick={() => nav('calendar')} />
           <TweakButton label="Open Stats" onClick={() => nav('stats')} />
           <TweakButton label="Open Wardrobe" onClick={() => nav('wardrobe')} />
+        </TweakSection>
+        <TweakSection label="Account">
+          <div style={{
+            padding: '8px 0 4px',
+            fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.08em',
+            color: 'var(--ink-soft)', wordBreak: 'break-all',
+          }}>
+            {userEmail}
+          </div>
+          <TweakButton label="Sign out" onClick={logout} />
         </TweakSection>
       </TweaksPanel>
     </div>

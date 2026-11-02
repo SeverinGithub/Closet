@@ -1,7 +1,9 @@
-// FITS screen — outfit gallery + swipe generator
+// FITS screen — outfit gallery + AI generator
 import React, { useState } from 'react';
 import { useCloset } from '../store.jsx';
 import { Icon, Chip, OutfitCard, tonalText } from '../components/ui.jsx';
+import { fetchWeather } from '../lib/weather.js';
+import { generateOutfitWithGemini } from '../lib/gemini.js';
 
 const QUESTIONS = [
   {
@@ -9,63 +11,65 @@ const QUESTIONS = [
     label: 'What\'s the occasion?',
     sub: 'Where are you headed today?',
     options: [
-      { label: 'Work', value: 'WORK',    hint: 'Office, meetings, professional' },
-      { label: 'Casual', value: 'CASUAL', hint: 'Errands, coffee, day out' },
+      { label: 'Work',    value: 'WORK',    hint: 'Office, meetings, professional' },
+      { label: 'Casual',  value: 'CASUAL',  hint: 'Errands, coffee, day out' },
       { label: 'Evening', value: 'EVENING', hint: 'Dinner, events, nightlife' },
-    ],
-  },
-  {
-    key: 'weather',
-    label: 'How\'s the weather?',
-    sub: 'Pick what fits the forecast.',
-    options: [
-      { label: 'Warm', value: 'warm',  hint: 'Above 20 °C, sun out' },
-      { label: 'Mild', value: 'mild',  hint: 'A light layer works' },
-      { label: 'Cold', value: 'cold',  hint: 'Below 10 °C, bundle up' },
-    ],
-  },
-  {
-    key: 'vibe',
-    label: 'What\'s the vibe?',
-    sub: 'How do you want to feel?',
-    options: [
-      { label: 'Clean',   value: 'clean',   hint: 'Minimal, sharp, precise' },
-      { label: 'Relaxed', value: 'relaxed', hint: 'Easy, effortless, comfortable' },
-      { label: 'Bold',    value: 'bold',    hint: 'Statement pieces, contrast' },
-      { label: 'Classic', value: 'classic', hint: 'Timeless, refined, structured' },
     ],
   },
 ];
 
 function GenerateWizard({ onNav }) {
-  const { outfits, itemsById, wearOutfit, likeOutfit, liked, wearLog, todayIso } = useCloset();
+  const { items, itemsById, addOutfit } = useCloset();
   const [phase, setPhase] = useState('intro');   // 'intro' | 'questions' | 'result'
   const [step,  setStep]  = useState(0);
   const [answers, setAnswers] = useState({});
-  const [result,  setResult]  = useState(null);
+  const [result,  setResult]  = useState(null);  // { item_ids, name, reason }
+  const [thinking, setThinking] = useState(false);
+  const [error, setError] = useState(null);
+  const [saved, setSaved] = useState(false);
 
-  const pickAnswer = (value) => {
+  const pickAnswer = async (value) => {
     const next = { ...answers, [QUESTIONS[step].key]: value };
     setAnswers(next);
     if (step + 1 < QUESTIONS.length) {
       setStep(step + 1);
     } else {
-      // pick best outfit
-      let pool = [...outfits];
-      if (next.occasion) {
-        const byOcc = pool.filter((o) => o.mood === next.occasion);
-        if (byOcc.length) pool = byOcc;
-      }
-      setResult(pool[Math.floor(Math.random() * pool.length)] || null);
+      setThinking(true);
       setPhase('result');
+      setError(null);
+      setSaved(false);
+      try {
+        const weather = await fetchWeather().catch(() => ({
+          temp: 18, desc: 'mild', condition: 'Clouds', city: '', wind: 0,
+        }));
+        const suggestion = await generateOutfitWithGemini({
+          items, weather,
+          vibe: next.occasion,
+          occasion: next.occasion,
+        });
+        setResult(suggestion);
+      } catch (e) {
+        console.error('Generation failed:', e);
+        setError('Could not generate outfit. Try again.');
+      } finally {
+        setThinking(false);
+      }
     }
   };
 
-  const restart = () => { setPhase('intro'); setStep(0); setAnswers({}); setResult(null); };
+  const restart = () => { setPhase('intro'); setStep(0); setAnswers({}); setResult(null); setError(null); setSaved(false); };
   const goBack  = () => {
     if (step === 0) restart();
     else setStep(step - 1);
   };
+
+  const save = () => {
+    if (!result || saved) return;
+    addOutfit({ name: result.name || 'AI Look', mood: answers.occasion, items: result.item_ids, occasion: answers.vibe ? [answers.vibe] : [] });
+    setSaved(true);
+  };
+
+  const resultItems = result ? result.item_ids.map((id) => itemsById[id]).filter(Boolean) : [];
 
   /* ── INTRO ── */
   if (phase === 'intro') {
@@ -194,13 +198,22 @@ function GenerateWizard({ onNav }) {
   }
 
   /* ── RESULT ── */
-  if (!result) {
+  if (thinking) {
+    return (
+      <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+        <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 22, color: 'var(--ink-soft)' }}>
+          Composing your look…
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !result) {
     return (
       <div style={{ padding: '48px 20px', textAlign: 'center' }}>
-        <div style={{
-          fontFamily: 'var(--serif)', fontStyle: 'italic',
-          fontSize: 22, color: 'var(--ink-soft)', marginBottom: 24,
-        }}>No matching outfits found.</div>
+        <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 18, color: 'var(--ink-soft)', marginBottom: 24 }}>
+          {error || 'No matching items found.'}
+        </div>
         <button onClick={restart} className="press" style={{
           padding: '14px 28px', background: 'var(--ink)', color: 'var(--bg)',
           borderRadius: 100, fontFamily: 'var(--mono)', fontSize: 10,
@@ -210,72 +223,27 @@ function GenerateWizard({ onNav }) {
     );
   }
 
-  const items     = result.items.map((id) => itemsById[id]).filter(Boolean);
-  const wornToday = wearLog[todayIso] === result.id;
-  const isLiked   = liked.includes(result.id);
-
   return (
     <div style={{ padding: '0 20px 24px' }} className="fade-in">
-      {/* progress complete */}
       <div style={{ height: 2, background: 'var(--ink)', borderRadius: 1, marginBottom: 28 }} />
 
       <div className="eyebrow" style={{ marginBottom: 6 }}>Your perfect look</div>
-      <div style={{
-        fontFamily: 'var(--serif)', fontStyle: 'italic',
-        fontSize: 36, lineHeight: 1.1, color: 'var(--ink)', marginBottom: 4,
-      }}>{result.name}</div>
-      <div style={{
-        fontFamily: 'var(--serif)', fontStyle: 'italic',
-        fontSize: 13, color: 'var(--ink-soft)', marginBottom: 20,
-      }}>
-        {result.mood} · {(result.occasion || []).join(', ')} · {result.items.length} pieces
+      <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 36, lineHeight: 1.1, color: 'var(--ink)', marginBottom: 4 }}>
+        {result.name}
       </div>
-
-      {/* outfit grid */}
-      <div style={{
-        border: '0.5px solid var(--line)', borderRadius: 8, overflow: 'hidden',
-        background: 'var(--line)', display: 'grid', gap: 1,
-        gridTemplateColumns: '1fr 1fr', marginBottom: 16,
-      }}>
-        {items.map((it) => (
-          <div key={it.id} style={{ position: 'relative', paddingBottom: '100%' }}>
-            <div style={{
-              position: 'absolute', inset: 0, overflow: 'hidden',
-              background: it.image ? 'var(--surface)' : it.tone,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              {it.image ? (
-                <img src={it.image} alt={it.name}
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
-              ) : (
-                <div className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
-                  style={{ position: 'absolute', inset: 0 }} />
-              )}
-              <div style={{
-                position: 'absolute', inset: 0, pointerEvents: 'none',
-                background: 'linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.38))',
-              }} />
-              <div style={{
-                position: 'absolute', bottom: 8, left: 10,
-                fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 12,
-                color: it.image ? 'rgba(245,240,228,1)' : tonalText(it.tone, 1),
-              }}>{it.name}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+      {result.reason && (
+        <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 13, color: 'var(--ink-soft)', marginBottom: 20, lineHeight: 1.5 }}>
+          {result.reason}
+        </div>
+      )}
 
       {/* items list */}
       <div style={{ marginBottom: 20 }}>
-        {items.map((it) => (
-          <div key={it.id} style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '8px 0', borderBottom: '0.5px solid var(--line)',
-          }}>
+        {resultItems.map((it) => (
+          <div key={it.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '0.5px solid var(--line)' }}>
             <div style={{
-              width: 36, height: 44, borderRadius: 3, flexShrink: 0, overflow: 'hidden',
+              width: 44, height: 54, borderRadius: 3, flexShrink: 0, overflow: 'hidden',
               background: it.image ? 'var(--surface)' : it.tone,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               {it.image
                 ? <img src={it.image} alt={it.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -284,6 +252,9 @@ function GenerateWizard({ onNav }) {
             <div style={{ flex: 1 }}>
               <div className="eyebrow" style={{ fontSize: 8.5 }}>{it.cat}</div>
               <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 15 }}>{it.name}</div>
+              {it.colors?.length > 0 && (
+                <div style={{ fontSize: 10, color: 'var(--ink-soft)', marginTop: 2 }}>{it.colors.join(' · ')}</div>
+              )}
             </div>
           </div>
         ))}
@@ -291,43 +262,28 @@ function GenerateWizard({ onNav }) {
 
       {/* actions */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-        <button onClick={() => wearOutfit(result.id)} className="press" style={{
-          flex: 1, padding: 14,
-          background: wornToday ? 'transparent' : 'var(--ink)',
-          color: wornToday ? 'var(--ink)' : 'var(--bg)',
-          border: wornToday ? '0.5px solid var(--ink)' : 'none',
-          borderRadius: 100, fontFamily: 'var(--mono)', fontSize: 10,
-          letterSpacing: '0.14em', textTransform: 'uppercase',
+        <button onClick={restart} className="press" style={{
+          flex: 1, padding: 14, background: 'transparent',
+          border: '0.5px dashed var(--line)', borderRadius: 100,
+          fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em',
+          textTransform: 'uppercase', color: 'var(--ink-soft)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
         }}>
-          <Icon name="check" size={12} sw={1.6} /> {wornToday ? 'Worn today' : 'Wear today'}
+          <Icon name="shuffle" size={12} sw={1.4} /> Try again
         </button>
-        <button onClick={() => likeOutfit(result.id)} className="press" style={{
-          padding: '14px 18px', background: 'transparent',
-          border: `0.5px solid ${isLiked ? 'var(--accent)' : 'var(--line)'}`,
-          borderRadius: 100,
+        <button onClick={save} disabled={saved} className="press" style={{
+          flex: 1, padding: 14,
+          background: saved ? 'var(--surface)' : 'var(--ink)',
+          color: saved ? 'var(--ink-mute)' : 'var(--bg)',
+          border: '0.5px solid var(--line)', borderRadius: 100,
+          fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
         }}>
-          <Icon name="heart" size={15} sw={1.4}
-            fill={isLiked ? 'var(--accent)' : 'none'}
-            stroke={isLiked ? 'var(--accent)' : 'currentColor'} />
-        </button>
-        <button onClick={() => onNav('outfit', result.id)} className="press" style={{
-          padding: '14px 18px', background: 'transparent',
-          border: '0.5px solid var(--line)', borderRadius: 100, color: 'var(--ink)',
-        }}>
-          <Icon name="search" size={15} sw={1.4} />
+          <Icon name="plus" size={12} sw={1.6} stroke={saved ? 'var(--ink-mute)' : 'var(--bg)'} />
+          {saved ? 'Saved' : 'Save look'}
         </button>
       </div>
-
-      <button onClick={restart} className="press" style={{
-        width: '100%', padding: 13, background: 'transparent',
-        border: '0.5px solid var(--line)', borderRadius: 100,
-        fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em',
-        textTransform: 'uppercase', color: 'var(--ink-soft)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-      }}>
-        <Icon name="close" size={10} sw={1.6} /> Start over
-      </button>
     </div>
   );
 }

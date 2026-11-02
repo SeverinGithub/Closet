@@ -18,6 +18,17 @@ export default function StatsScreen({ mode, onBack, onNav }) {
 
   const mostWorn  = [...items].sort((a, b) => b.worn - a.worn).slice(0, 5);
   const unworn    = [...items].filter((i) => i.worn === 0).slice(0, 4);
+
+  // Cost-per-wear: items with price AND worn > 0, sorted cheapest per wear first
+  const cpwItems = items
+    .map((it) => {
+      const raw = parseFloat(String(it.price || '').replace(/[^0-9.]/g, ''));
+      if (!raw || !it.worn) return null;
+      return { ...it, cpw: raw / it.worn, priceNum: raw };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.cpw - b.cpw)
+    .slice(0, 5);
   const catTotals = categories.map((c) => ({
     c,
     count: items.filter((i) => i.cat === c).length,
@@ -123,6 +134,49 @@ export default function StatsScreen({ mode, onBack, onNav }) {
           ))}
         </div>
       </div>
+
+      {/* cost per wear */}
+      {cpwItems.length > 0 && (
+        <div style={{ paddingTop: 32 }}>
+          <div style={{ padding: '0 20px', marginBottom: 14 }}>
+            <div className="eyebrow" style={{ marginBottom: 6 }}>Best value · cost per wear</div>
+            <div className="h-display" style={{ fontSize: 28 }}>
+              Money <em>well spent</em>
+            </div>
+            <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
+              Price ÷ times worn — the lower the better.
+            </div>
+          </div>
+          <div style={{ padding: '0 20px' }}>
+            {cpwItems.map((it, i) => (
+              <button key={it.id} onClick={() => onNav('item', it.id)} className="press" style={{
+                width: '100%', padding: '10px 0',
+                display: 'flex', alignItems: 'center', gap: 12,
+                borderBottom: '0.5px solid var(--line)', textAlign: 'left',
+              }}>
+                <div style={{ fontFamily: 'var(--serif)', fontSize: 24, fontStyle: 'italic', width: 28, color: 'var(--ink-mute)' }}>
+                  {String(i + 1).padStart(2, '0')}
+                </div>
+                <div className={it.pat !== 'solid' ? `pat-${it.pat}` : ''}
+                  style={{ width: 40, height: 50, background: it.tone, borderRadius: 3, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="eyebrow" style={{ fontSize: 8.5 }}>{it.cat}</div>
+                  <div style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontSize: 17, lineHeight: 1.1 }}>{it.name}</div>
+                  <div style={{ fontSize: 10, color: 'var(--ink-mute)', fontFamily: 'var(--mono)', marginTop: 2 }}>
+                    € {it.priceNum.toFixed(0)} · {it.worn}× worn
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--serif)', fontSize: 22, lineHeight: 1, textAlign: 'right', color: it.cpw < 5 ? 'var(--accent)' : 'var(--ink)' }}>
+                    € {it.cpw.toFixed(2)}
+                  </div>
+                  <div style={{ fontSize: 9, color: 'var(--ink-mute)', fontFamily: 'var(--mono)', textAlign: 'right', letterSpacing: '0.1em', textTransform: 'uppercase' }}>/ wear</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* unworn */}
       <div style={{ paddingTop: 32 }}>
